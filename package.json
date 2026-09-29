@@ -8,5 +8,8 @@
     "test": "npm run test:build && node --test .test-build/tests/*.test.js",
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "dev": "python3 -m http.server 4173"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
   }
 }
