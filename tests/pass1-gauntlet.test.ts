@@ -21,11 +21,13 @@ test('PASS1 core combat contract holds together', () => {
   const pool=new AttackTokenPool(2); assert.equal(pool.acquire('a','NORMAL'),true); assert.equal(pool.acquire('b','NORMAL'),true); assert.equal(pool.acquire('c','NORMAL'),false); assert.equal(pool.acquire('punk','PUNK_CHARGE'),true);
 });
 
-test('PASS1 encounter contract reaches completion without active-enemy overflow', () => {
+test('PASS1 encounter contract reaches completion through two MOVE gates without active-enemy overflow', () => {
   const w=createWorld(), e=createRatHoleEncounter();
   const tick=(ms:number)=>{updateEncounter(w,e,ms);assert.ok(w.enemies.filter(x=>x.state!=='KO').length<=3);assert.ok(w.tokens.ordinaryCount<=2);};
   tick(1000); for(const x of w.enemies){x.state='KO';x.hp=0;} tick(16);
-  tick(1);tick(1300);for(const x of w.enemies){x.state='KO';x.hp=0;}tick(16);
-  tick(1);for(const x of w.enemies){x.state='KO';x.hp=0;}tick(16);
+  assert.equal(e.stage,'MOVE1'); w.polly.position.x=900; tick(1);
+  tick(1300);for(const x of w.enemies){x.state='KO';x.hp=0;}tick(16);
+  assert.equal(e.stage,'MOVE2'); w.polly.position.x=1650; tick(1);
+  for(const x of w.enemies){x.state='KO';x.hp=0;}tick(16);
   assert.equal(w.sliceComplete,true);
 });
