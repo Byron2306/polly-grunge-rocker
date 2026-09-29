@@ -8,8 +8,9 @@ import { TouchController, mergePlayerIntents } from '../../input/touch.js';
 import { installTouchControls } from '../../input/touchUi.js';
 import { isGameplayInputBlocked } from '../../platform/mobileShell.js';
 
-interface SceneRuntime { world:ReturnType<typeof createWorld>; encounter:ReturnType<typeof createRatHoleEncounter>; clock:FixedStepClock; currentKeys:Set<string>; previousKeys:Set<string>; touchController:TouchController; disposeTouch:()=>void; graphics:any; text:any; hpText:any; }
+interface SceneRuntime { world:ReturnType<typeof createWorld>; encounter:ReturnType<typeof createRatHoleEncounter>; clock:FixedStepClock; currentKeys:Set<string>; previousKeys:Set<string>; touchController:TouchController; disposeTouch:()=>void; graphics:any; text:any; hpText:any; moveText:any; }
 function runtime(scene:any):SceneRuntime { return scene.__pollyRuntime as SceneRuntime; }
+function isMoveStage(stage:string):boolean { return stage==='MOVE1'||stage==='MOVE2'; }
 function render(scene:any):void {
   const r=runtime(scene), g=r.graphics, w=r.world, offset=cameraOffsetX(w.polly.position.x);
   g.clear();
@@ -28,10 +29,17 @@ function render(scene:any):void {
 
   for(const strike of strikeDescriptors(w)){
     const sx=strike.x-offset;
-    g.fillStyle(strike.color,.92);
-    g.fillRect(sx-strike.width/2,strike.y-strike.height/2,strike.width,strike.height);
-    g.lineStyle(1,0xffffff,.65);
-    g.strokeRect(sx-strike.width/2,strike.y-strike.height/2,strike.width,strike.height);
+    const left=sx-strike.width/2, top=strike.y-strike.height/2;
+    if(strike.phase==='TELEGRAPH'){
+      g.lineStyle(strike.shape==='RAM'?4:2,strike.color,.62);
+      g.strokeRect(left,top,strike.width,strike.height);
+    } else {
+      const alpha=strike.shape==='GUITAR'?.9:.82;
+      g.fillStyle(strike.color,alpha);
+      g.fillRect(left,top,strike.width,strike.height);
+      g.lineStyle(1,0xffffff,.75);
+      g.strokeRect(left,top,strike.width,strike.height);
+    }
   }
 
   for(const p of w.pickups.filter(p=>!p.heldBy&&!p.broken)){
@@ -40,11 +48,14 @@ function render(scene:any):void {
   }
   r.text.setText(`STATE ${w.polly.state}  COMBO ${w.polly.comboIndex}  WAVE ${r.encounter.stage}\nJ / LIGHT   K / HEAVY   L / USE   SHIFT / RUN`);
   r.hpText.setText(`POLLY HP ${w.polly.hp.toFixed(1)} / ${w.polly.maxHp}`);
-  if(w.sliceComplete) r.text.setText('SLICE COMPLETE\nRECTANGLES HAVE PREVAILED.');
+  r.moveText.setText(isMoveStage(r.encounter.stage)?'MOVE  >>>':'' );
+  r.moveText.setVisible(isMoveStage(r.encounter.stage));
+  if(w.sliceComplete){r.text.setText('SLICE COMPLETE\nRECTANGLES HAVE PREVAILED.');r.moveText.setVisible(false);}
 }
 function combatStep(scene:any,dt:number):void {
   const r=runtime(scene);
   const intent=mergePlayerIntents(readKeyboardIntent(r.currentKeys,r.previousKeys),r.touchController.consumeIntent());
+  if(isMoveStage(r.encounter.stage) && intent.moveX>0) intent.sprint=true;
   stepWorld(r.world,intent,dt);
   updateEncounter(r.world,r.encounter,dt);
   r.previousKeys=new Set(r.currentKeys);
@@ -57,7 +68,13 @@ export const RatHoleScene = {
     const currentKeys=new Set<string>();
     const touchController=new TouchController();
     const disposeTouch=installTouchControls(touchController);
-    this.__pollyRuntime={world,encounter:createRatHoleEncounter(),clock:new FixedStepClock(),currentKeys,previousKeys:new Set<string>(),touchController,disposeTouch,graphics:this.add.graphics(),text:this.add.text(18,18,'',{fontFamily:'monospace',fontSize:'15px',color:'#eeeeee'}).setScrollFactor(0),hpText:this.add.text(18,500,'',{fontFamily:'monospace',fontSize:'16px',color:'#ffffff'}).setScrollFactor(0)} as SceneRuntime;
+    this.__pollyRuntime={
+      world,encounter:createRatHoleEncounter(),clock:new FixedStepClock(),currentKeys,previousKeys:new Set<string>(),touchController,disposeTouch,
+      graphics:this.add.graphics(),
+      text:this.add.text(18,18,'',{fontFamily:'monospace',fontSize:'15px',color:'#eeeeee'}).setScrollFactor(0),
+      hpText:this.add.text(18,500,'',{fontFamily:'monospace',fontSize:'16px',color:'#ffffff'}).setScrollFactor(0),
+      moveText:this.add.text(720,88,'',{fontFamily:'monospace',fontSize:'34px',fontStyle:'bold',color:'#ffe276',stroke:'#111111',strokeThickness:5}).setScrollFactor(0),
+    } as SceneRuntime;
     this.input.keyboard.on('keydown',(ev:KeyboardEvent)=>currentKeys.add(ev.code));
     this.input.keyboard.on('keyup',(ev:KeyboardEvent)=>currentKeys.delete(ev.code));
     this.events?.once?.('shutdown',()=>disposeTouch());
