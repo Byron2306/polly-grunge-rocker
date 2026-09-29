@@ -1,0 +1,10 @@
+export const SIM_STEP_MS = 1000 / 60;
+export const STANDARD_LANE_TOLERANCE = 24;
+export const HEAVY_LANE_TOLERANCE = 32;
+export const PUNK_CHARGE_LANE_TOLERANCE = 16;
+export const WALK_SPEED = 180;
+export const VERTICAL_SPEED_RATIO = 0.82;
+export const SPRINT_RATIO = 1.55;
+export const INPUT_BUFFER_MS = 180;
+export const COMBO_RESET_MS = 300;
+export const KNOCKDOWN_INVULN_MS = 350;
