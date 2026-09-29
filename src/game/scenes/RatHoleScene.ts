@@ -2,7 +2,7 @@ import { FixedStepClock } from '../../sim/fixedStep.js';
 import { createWorld, stepWorld } from '../../sim/world.js';
 import { createRatHoleEncounter, updateEncounter } from '../../sim/encounters.js';
 import { createPickup } from '../../sim/pickups.js';
-import { blockDescriptors, cameraOffsetX } from '../../render/blockRenderer.js';
+import { blockDescriptors, cameraOffsetX, strikeDescriptors } from '../../render/blockRenderer.js';
 import { readKeyboardIntent } from '../../input/keyboard.js';
 import { TouchController, mergePlayerIntents } from '../../input/touch.js';
 import { installTouchControls } from '../../input/touchUi.js';
@@ -17,6 +17,7 @@ function render(scene:any):void {
   g.fillStyle(0x24242b,1); g.fillRect(0,250,960,250);
   g.lineStyle(2,0x55555d,1); g.strokeRect(40,270,880,210);
   g.fillStyle(0x3b3030,1); g.fillRect(70-offset,210,150,60);
+
   for(const b of blockDescriptors(w).sort((a,b)=>a.depth-b.depth)){
     const sx=b.x-offset, sy=b.y;
     g.fillStyle(0x000000,.35); g.fillEllipse(sx-20,sy-8,40,12);
@@ -24,7 +25,19 @@ function render(scene:any):void {
     g.fillStyle(0x111111,1); g.fillRect(sx-24,sy-b.height-12,48,6);
     g.fillStyle(0x7bd36d,1); g.fillRect(sx-24,sy-b.height-12,48*(Math.max(0,b.hp)/b.maxHp),6);
   }
-  for(const p of w.pickups.filter(p=>!p.heldBy&&!p.broken)){g.fillStyle(p.kind==='BOTTLE'?0x55aa77:0xaaaaaa,1);g.fillRect(p.x-offset-5,p.y-24,10,24);}
+
+  for(const strike of strikeDescriptors(w)){
+    const sx=strike.x-offset;
+    g.fillStyle(strike.color,.92);
+    g.fillRect(sx-strike.width/2,strike.y-strike.height/2,strike.width,strike.height);
+    g.lineStyle(1,0xffffff,.65);
+    g.strokeRect(sx-strike.width/2,strike.y-strike.height/2,strike.width,strike.height);
+  }
+
+  for(const p of w.pickups.filter(p=>!p.heldBy&&!p.broken)){
+    g.fillStyle(p.kind==='BOTTLE'?0x55aa77:0xaaaaaa,1);
+    g.fillRect(p.x-offset-5,p.y-24,10,24);
+  }
   r.text.setText(`STATE ${w.polly.state}  COMBO ${w.polly.comboIndex}  WAVE ${r.encounter.stage}\nJ / LIGHT   K / HEAVY   L / USE   SHIFT / RUN`);
   r.hpText.setText(`POLLY HP ${w.polly.hp.toFixed(1)} / ${w.polly.maxHp}`);
   if(w.sliceComplete) r.text.setText('SLICE COMPLETE\nRECTANGLES HAVE PREVAILED.');
