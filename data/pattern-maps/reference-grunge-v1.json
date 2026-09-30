@@ -2,7 +2,7 @@
   "schema":"polly.pattern-map.v1",
   "trackId":"rat-hole-grunge-reference-v1",
   "durationMs":8000,
-  "tempoRegions":[{"startMs":0,"endMs":8000,"bpm":120}],
+  "tempoRegions":[{"startMs":0,"endMs":4000,"bpm":120},{"startMs":4000,"endMs":8000,"bpm":60}],
   "meterRegions":[{"startMs":0,"endMs":8000,"numerator":4,"denominator":4}],
   "sections":[{"id":"verse","label":"Verse","startMs":0,"endMs":4000},{"id":"chorus","label":"Chorus","startMs":4000,"endMs":8000}],
   "layers":{
