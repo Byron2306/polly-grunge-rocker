@@ -1,0 +1,22 @@
+{
+  "schema": "polly.fusion-lab.production-host.v1",
+  "host_id": "host-003-chainsaw-diplomacy",
+  "title": "CHAINSAW DIPLOMACY",
+  "bpm": 192,
+  "meter": [4, 4],
+  "bars": 64,
+  "tuning": "E_STANDARD",
+  "production_profile": "THRASH_1988",
+  "humanization_seed": 1988,
+  "authenticity_review": {
+    "state": "PENDING",
+    "notes": [],
+    "authority": "human_knowledgeable_other"
+  },
+  "vocal_policy": "real human vocals later; no canonical synthesized vocal",
+  "laws": [
+    "STYLE != FUNCTION",
+    "PERFORMANCE TRUTH != TONE",
+    "STRUCTURE IS SHARED. STYLE IS PERSONAL."
+  ]
+}
