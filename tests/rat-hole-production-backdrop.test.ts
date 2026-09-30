@@ -1,13 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RAT_HOLE_BACKDROPS, backdropScreenX } from '../src/render/ratHoleProductionBackdrop.js';
+import { RAT_HOLE_LAYERS, ratHoleLayerScreenX } from '../src/render/ratHoleProductionBackdrop.js';
 
-test('Rat Hole production pass provides three world-space zone plates',()=>{
-  assert.equal(RAT_HOLE_BACKDROPS.length,3);
-  assert.deepEqual(RAT_HOLE_BACKDROPS.map(x=>x.worldX),[0,850,1700]);
-  assert.equal(RAT_HOLE_BACKDROPS.every(x=>x.width===960&&x.height===540),true);
+test('Rat Hole production art is descriptor driven across three continuous zones',()=>{
+  assert.equal(RAT_HOLE_LAYERS.length,9);
+  assert.deepEqual(
+    RAT_HOLE_LAYERS.filter(x=>x.kind==='MID').map(x=>x.worldX),
+    [0,850,1700]
+  );
+  assert.equal(
+    RAT_HOLE_LAYERS.every(x=>x.path.startsWith('assets/environment/rat-hole/production/')),
+    true
+  );
 });
 
-test('backdrop positioning follows the same camera offset as combat space',()=>{
-  assert.equal(backdropScreenX(850,300),550);
+test('production layer positioning applies the layer parallax',()=>{
+  const mid=RAT_HOLE_LAYERS.find(x=>x.zone===2&&x.kind==='MID')!;
+  const near=RAT_HOLE_LAYERS.find(x=>x.zone===2&&x.kind==='NEAR')!;
+  assert.equal(ratHoleLayerScreenX(mid,300),550);
+  assert.equal(ratHoleLayerScreenX(near,300),526);
 });
