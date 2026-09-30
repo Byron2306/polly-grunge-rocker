@@ -1,0 +1,25 @@
+{
+  "bpm": 138,
+  "host_id": "host-001-glamasaurus-rex",
+  "host_structural_signature": "d3b5cd3e0023759a798e52df6202e463730a19404f0c0f84755832620163d023",
+  "meter": [
+    4,
+    4
+  ],
+  "midi_files": {
+    "BASS": "bass.mid",
+    "DRUMS": "drums.mid",
+    "LEAD_KEYS": "lead_keys.mid",
+    "RHYTHM_GUITAR": "rhythm_guitar.mid",
+    "VOCALS": "vocals.mid"
+  },
+  "role_signatures": {
+    "BASS": "c5597837ad15c2e413b75dca3948ef91093b6117328ebb442f2ca067a2f5a91b",
+    "DRUMS": "3c9019a431a88ff5b94b2d7aea75dc156c8f5af24e039b4fad0739b5567c326b",
+    "LEAD_KEYS": "8fb889240b7c51e1cbeb2566517d7a7b6f5cb292fab3aa7cf43d056adea7c8ae",
+    "RHYTHM_GUITAR": "9dc486126a844f4cbf1181b7a94d9f00381dc53934b8bcbaa9e7791f19dc0f26",
+    "VOCALS": "45213f2949589cfd5924006d79bc79f2a795ec277c0b9496ac2e721e6b07cab3"
+  },
+  "schema": "polly.fusion-lab.host-manifest.v1",
+  "tonal_center": "E"
+}
