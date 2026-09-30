@@ -2,3 +2,6 @@
 .superpowers/
 .test-build/
 dist/
+fusion_lab/out/
+__pycache__/
+*.pyc
