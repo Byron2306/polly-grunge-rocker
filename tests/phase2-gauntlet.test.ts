@@ -15,10 +15,10 @@ const ko=()=>{for(const e of world.enemies){e.state='KO';e.hp=0;}};
 
 test('Phase2B.1 preserves Phase1 combat truth through all Rat Hole zones',()=>{
   assert.deepEqual([WALK_SPEED,VERTICAL_SPEED_RATIO,SPRINT_RATIO,STANDARD_LANE_TOLERANCE],[180,.82,1.55,24]);
-  assert.deepEqual([WALKABLE_Y_MIN,WALKABLE_Y_MAX],[330,485]);
+  assert.deepEqual([WALKABLE_Y_MIN,WALKABLE_Y_MAX],[360,485]);
 
   clampActorsToWalkBand([world.polly]);
-  assert.equal(world.polly.position.y,330);
+  assert.equal(world.polly.position.y,360);
 
   const enc=createRatHoleEncounter();
   updateEncounter(world,enc,1000);

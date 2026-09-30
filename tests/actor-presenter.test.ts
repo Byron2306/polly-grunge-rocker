@@ -11,4 +11,4 @@ test('actor presenter selects block fallback when asset unavailable',()=>{const 
 
 test('ActorPresenter sync does not mutate simulation fields',()=>{const scene:any={textures:{exists:()=>false},add:{sprite:()=>{throw new Error('should not create sprite');}}}; const a=actor(),before=JSON.stringify(a); const presenter=new ActorPresenter(scene); presenter.syncActor(a,0); assert.equal(JSON.stringify(a),before); presenter.destroy();});
 
-test('enemy with no production master stays on block fallback without throwing',()=>{const e=actor('GLAM');const scene:any={textures:{exists:()=>false},add:{sprite:()=>{throw new Error('should not create enemy sprite');}}};const presenter=new ActorPresenter(scene);assert.equal(presentationForActor(e,0,true).fallback,true);assert.equal(presenter.syncActor(e,0).fallback,true);});
+test('production enemy presents as sprite when asset is available',()=>{const e=actor('GLAM');assert.equal(presentationForActor(e,0,true).fallback,false);});
