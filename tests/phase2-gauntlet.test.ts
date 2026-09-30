@@ -12,11 +12,16 @@ const polly:Actor={id:'polly',kind:'POLLY',state:'IDLE',position:{x:120,y:320},v
 const world:any={polly,enemies:[],pickups:[],tokens:new AttackTokenPool(2),elapsedMs:0,sliceComplete:false};
 const ko=()=>{for(const e of world.enemies){e.state='KO';e.hp=0;}};
 
-test('Phase 2 gauntlet preserves Phase 1 truth through all Rat Hole zones',()=>{
+test('Phase 2 production-master pivot preserves Phase 1 truth through all Rat Hole zones',()=>{
   assert.deepEqual([WALK_SPEED,VERTICAL_SPEED_RATIO,SPRINT_RATIO,STANDARD_LANE_TOLERANCE],[180,.82,1.55,24]);
   const enc=createRatHoleEncounter();
   updateEncounter(world,enc,1000);assert.equal(enc.stage,'E1');assert.equal(world.enemies.length,1);
-  for(const a of [world.polly,...world.enemies]){const v=visualStateForActor(a);assert.equal(framesForVisualState(v.key).frames.length,2);const before=JSON.stringify(a);presentationForActor(a,0,true);assert.equal(JSON.stringify(a),before);}
+  for(const a of [world.polly,...world.enemies]){
+    const v=visualStateForActor(a),def=framesForVisualState(v.key),before=JSON.stringify(a);
+    if(a.kind==='POLLY') assert.equal(def.frames.length,1); else assert.equal(def.key,'fallback');
+    presentationForActor(a,0,true);
+    assert.equal(JSON.stringify(a),before);
+  }
   ko();updateEncounter(world,enc,16);assert.equal(enc.stage,'MOVE1');
   world.polly.position.x=900;updateEncounter(world,enc,16);assert.equal(enc.stage,'E2');
   updateEncounter(world,enc,1300);assert.equal(world.enemies.length,2);

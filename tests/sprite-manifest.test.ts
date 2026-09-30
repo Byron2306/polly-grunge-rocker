@@ -1,9 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PHASE2_SPRITE_MANIFEST, framesForVisualState } from '../src/render/spriteManifest.js';
+import { framesForVisualState, productionSpriteSheets } from '../src/render/spriteManifest.js';
 
-const required=['polly.idle','polly.walk','polly.sprint','polly.light1','polly.light2','polly.light3','polly.heavy.startup','polly.heavy.active','polly.hurt','polly.getup','polly.ko','glam.idle','glam.walk','glam.threaten','glam.attack','glam.hurt','glam.ko','prog.idle','prog.walk','prog.threaten','prog.attack','prog.hurt','prog.ko','punk.idle','punk.walk','punk.threaten','punk.attack','punk.hurt','punk.ko'];
+const pollyStates=['polly.idle','polly.walk','polly.sprint','polly.light1','polly.light2','polly.light3','polly.heavy.startup','polly.heavy.active','polly.heavy.recovery','polly.hurt','polly.knockdown','polly.getup','polly.carry','polly.victory','polly.ko'];
 
-test('sprite manifest gives every approved Phase 2 state exactly two frame slots',()=>{for(const key of required){const def=PHASE2_SPRITE_MANIFEST[key]; assert.ok(def,key); assert.equal(def.frames.length,2,key);}});
+test('sprite manifest maps every Polly state to one shared production master',()=>{
+  const defs=pollyStates.map(framesForVisualState);
+  assert.equal(defs.every(d=>d.frames.length===1),true);
+  const refs=defs.map(d=>d.frames[0]);
+  assert.equal(new Set(refs.map(r=>`${r.assetKey}:${r.path}:${r.frameIndex}`)).size,1);
+  assert.equal(refs[0].path,'assets/characters/polly/polly-master.png');
+});
 
-test('sprite manifest falls back safely for missing keys',()=>{const d=framesForVisualState('unknown.state'); assert.equal(d.key,'fallback'); assert.equal(d.frames.length,2);});
+test('sprite manifest falls back safely when no production master exists',()=>{
+  const d=framesForVisualState('glam.attack');
+  assert.equal(d.key,'fallback');
+  assert.equal(d.frames.length,0);
+});
+
+test('only Polly production master is preloaded in the production-master slice',()=>{
+  const sheets=productionSpriteSheets();
+  assert.equal(sheets.length,1);
+  assert.equal(sheets[0].assetKey,'characters.polly.master');
+  assert.equal(sheets[0].frameWidth,160);
+  assert.equal(sheets[0].frameHeight,160);
+});
