@@ -1,0 +1,31 @@
+{
+  "schema":"polly.authoring-session.v1",
+  "sessionId":"rat-hole-reference-authoring",
+  "trackId":"rat-hole-grunge-reference-v1",
+  "durationMs":8000,
+  "inputs":[
+    {"id":"drums","kind":"WAV","role":"DRUMS","path":"stems/drums.wav"},
+    {"id":"bass","kind":"WAV","role":"BASS","path":"stems/bass.wav"},
+    {"id":"rhythm","kind":"WAV","role":"RHYTHM_GUITAR","path":"stems/rhythm.wav"},
+    {"id":"lead","kind":"WAV","role":"LEAD_KEYS","path":"stems/lead.wav"},
+    {"id":"vocals","kind":"WAV","role":"VOCALS","path":"stems/vocals.wav"}
+  ],
+  "candidates":[
+    {"id":"d1","kind":"ONSET","confidence":0.91,"sourceId":"drums","role":"DRUMS","startMs":2000,"endMs":2050,"eventKind":"ACCENT"},
+    {"id":"b1","kind":"REPEATED_CELL","confidence":0.84,"sourceId":"bass","role":"BASS","startMs":2005,"endMs":2200,"eventKind":"CELL"},
+    {"id":"r1","kind":"REPEATED_CELL","confidence":0.88,"sourceId":"rhythm","role":"RHYTHM_GUITAR","startMs":2010,"endMs":2200,"eventKind":"CELL"},
+    {"id":"l1","kind":"PHRASE","confidence":0.73,"sourceId":"lead","role":"LEAD_KEYS","startMs":1990,"endMs":2150,"eventKind":"PHRASE_START"},
+    {"id":"v1","kind":"ONSET","confidence":0.76,"sourceId":"vocals","role":"VOCALS","startMs":1995,"endMs":2150,"eventKind":"ONSET"},
+    {"id":"tempo-guess-240","kind":"BPM","confidence":0.62,"sourceId":"drums","bpm":240},
+    {"id":"five-role-lock","kind":"ALIGNMENT","confidence":0.89,"sourceId":"alignment-analysis","startMs":1990,"endMs":2200,"relatedCandidateIds":["d1","b1","r1","l1","v1"],"label":"five-role convergence"}
+  ],
+  "corrections":[
+    {"candidateId":"d1","decision":"ACCEPT"},
+    {"candidateId":"b1","decision":"ADJUST","startMs":1998,"note":"nudged to audible bass attack"},
+    {"candidateId":"r1","decision":"ACCEPT"},
+    {"candidateId":"l1","decision":"ACCEPT"},
+    {"candidateId":"v1","decision":"ACCEPT"},
+    {"candidateId":"tempo-guess-240","decision":"REJECT","note":"double-time interpretation is visible but not authoritative"},
+    {"candidateId":"five-role-lock","decision":"ACCEPT"}
+  ]
+}
