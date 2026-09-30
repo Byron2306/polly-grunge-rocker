@@ -17,5 +17,5 @@ for(const state of POLLY_STATES){
 
 export const PHASE2_SPRITE_MANIFEST:Record<string,SpriteAnimationDef>=manifest;
 export function framesForVisualState(key:VisualStateKey):SpriteAnimationDef { return PHASE2_SPRITE_MANIFEST[key] ?? FALLBACK_SPRITE; }
-export function productionSpriteSheets():SpriteSheetDef[]{ return [{assetKey:POLLY_MASTER.assetKey,path:POLLY_MASTER.path,frameWidth:160,frameHeight:160}]; }
+export function productionSpriteSheets():SpriteSheetDef[]{ return [{assetKey:POLLY_MASTER.assetKey,path:POLLY_MASTER.path,frameWidth:128,frameHeight:128}]; }
 export const spriteSheetsForManifest=productionSpriteSheets;
