@@ -24,10 +24,11 @@ export function resolveCandidate(session:AuthoringSession,candidateId:string):Re
   const correction=correctionIndex(session).get(candidateId);
   if(!correction||correction.decision==='REJECT') return null;
   const adjusted:AnalysisCandidate={...candidate};
+  const mutable=adjusted as unknown as Record<string,unknown>;
   const fields=['startMs','endMs','bpm','meterNumerator','meterDenominator','eventKind','role','label','relatedCandidateIds'] as const;
   if(correction.decision==='ADJUST') for(const field of fields){
     const value=correction[field];
-    if(value!==undefined) (adjusted as Record<string,unknown>)[field]=value;
+    if(value!==undefined) mutable[field]=value;
   }
   return {
     ...adjusted,
