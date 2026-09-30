@@ -56,3 +56,33 @@ def mix_stems(stems:dict[Role,Path],mix_path:Path)->None:
         subprocess.run(cmd,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         return
     raise RuntimeError('FUSION_RENDER_MISSING_MIXER: install ffmpeg or sox')
+
+def render_named_stems(midi_paths:dict[str,Path],out_dir:Path,config:RenderConfig)->dict[str,Path]:
+    out_dir=Path(out_dir); out_dir.mkdir(parents=True,exist_ok=True)
+    result={}
+    for key in sorted(midi_paths):
+        wav=out_dir/f'{key}.wav'
+        render_midi(Path(midi_paths[key]),wav,config)
+        result[key]=wav
+    return result
+
+def mix_named_stems(stems:dict[str,Path],mix_path:Path)->None:
+    if not stems:
+        raise RuntimeError('FUSION_RENDER_MISSING_STEM: no stems')
+    for key,path in stems.items():
+        if not Path(path).is_file():
+            raise RuntimeError(f'FUSION_RENDER_MISSING_STEM: {key}')
+    mix_path=Path(mix_path); mix_path.parent.mkdir(parents=True,exist_ok=True)
+    ffmpeg=shutil.which('ffmpeg')
+    if ffmpeg:
+        cmd=[ffmpeg,'-y']
+        for key in sorted(stems): cmd += ['-i',str(stems[key])]
+        cmd += ['-filter_complex',f'amix=inputs={len(stems)}:normalize=0','-c:a','pcm_s16le',str(mix_path)]
+        subprocess.run(cmd,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        return
+    sox=shutil.which('sox')
+    if sox:
+        cmd=[sox,'-m',*(str(stems[k]) for k in sorted(stems)),str(mix_path)]
+        subprocess.run(cmd,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        return
+    raise RuntimeError('FUSION_RENDER_MISSING_MIXER: install ffmpeg or sox')
