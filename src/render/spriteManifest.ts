@@ -1,25 +1,25 @@
 import type { VisualStateKey } from './visualState.js';
 
 export interface SpriteFrameRef { assetKey:string; path:string; frameIndex:number; }
-export interface SpriteAnimationDef { key:VisualStateKey; frames:[SpriteFrameRef,SpriteFrameRef]; frameMs:number; loop:boolean; family:string; }
+export interface SpriteAnimationDef { key:VisualStateKey; frames:[SpriteFrameRef,SpriteFrameRef]; frameMs:number; loop:boolean; family:string; paletteTag:string; }
 export interface SpriteSheetDef { assetKey:string; path:string; frameWidth:number; frameHeight:number; }
 export const POLLY_HEAVY_FX_KEY='fx.guitar-arc';
-export const FALLBACK_SPRITE:SpriteAnimationDef={key:'fallback',frames:[{assetKey:'fallback',path:'',frameIndex:0},{assetKey:'fallback',path:'',frameIndex:0}],frameMs:250,loop:true,family:'fallback'};
+export const FALLBACK_SPRITE:SpriteAnimationDef={key:'fallback',frames:[{assetKey:'fallback',path:'',frameIndex:0},{assetKey:'fallback',path:'',frameIndex:0}],frameMs:250,loop:true,family:'fallback',paletteTag:'fallback'};
 
 const manifest:Record<string,SpriteAnimationDef>={};
-function registerFamily(prefix:string,family:string,path:string,states:readonly [string,boolean,number][]):void {
+function registerFamily(prefix:string,family:string,path:string,paletteTag:string,states:readonly [string,boolean,number][]):void {
   states.forEach(([state,loop,frameMs],i)=>{
     const key=`${prefix}.${state}`;
     const assetKey=`${family}.sheet`;
-    manifest[key]={key,frames:[{assetKey,path,frameIndex:i*2},{assetKey,path,frameIndex:i*2+1}],frameMs,loop,family};
+    manifest[key]={key,frames:[{assetKey,path,frameIndex:i*2},{assetKey,path,frameIndex:i*2+1}],frameMs,loop,family,paletteTag};
   });
 }
-registerFamily('polly','characters.polly','assets/characters/polly/polly-phase2.png',[
+registerFamily('polly','characters.polly','assets/characters/polly/polly-phase2.png','auburn-flannel',[
   ['idle',true,260],['walk',true,150],['sprint',true,110],['light1',false,90],['light2',false,100],['light3',false,120],
   ['heavy.startup',false,150],['heavy.active',false,90],['heavy.recovery',false,180],['hurt',false,120],['knockdown',false,180],['getup',false,180],['carry',true,220],['victory',true,260],['ko',false,240],
 ] as const);
 for(const family of ['glam','prog','punk'] as const){
-  registerFamily(family,`enemies.${family}`,`assets/enemies/${family}/${family}-phase2.png`,[
+  registerFamily(family,`enemies.${family}`,`assets/enemies/${family}/${family}-phase2.png`,family==='glam'?'magenta-glam':family==='prog'?'acid-green-prog':'rust-red-punk',[
     ['idle',true,260],['walk',true,160],['threaten',true,140],['attack',false,100],['hurt',false,120],['ko',false,240],
   ] as const);
 }
