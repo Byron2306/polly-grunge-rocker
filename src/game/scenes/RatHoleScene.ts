@@ -3,12 +3,13 @@ import { createWorld, stepWorld } from '../../sim/world.js';
 import { createRatHoleEncounter, updateEncounter } from '../../sim/encounters.js';
 import { createPickup } from '../../sim/pickups.js';
 import { blockDescriptors, cameraOffsetX, strikeDescriptors } from '../../render/blockRenderer.js';
+import { ActorPresenter } from '../../render/actorPresenter.js';
 import { readKeyboardIntent } from '../../input/keyboard.js';
 import { TouchController, mergePlayerIntents } from '../../input/touch.js';
 import { installTouchControls } from '../../input/touchUi.js';
 import { isGameplayInputBlocked } from '../../platform/mobileShell.js';
 
-interface SceneRuntime { world:ReturnType<typeof createWorld>; encounter:ReturnType<typeof createRatHoleEncounter>; clock:FixedStepClock; currentKeys:Set<string>; previousKeys:Set<string>; touchController:TouchController; disposeTouch:()=>void; graphics:any; text:any; hpText:any; moveText:any; }
+interface SceneRuntime { world:ReturnType<typeof createWorld>; encounter:ReturnType<typeof createRatHoleEncounter>; clock:FixedStepClock; currentKeys:Set<string>; previousKeys:Set<string>; touchController:TouchController; disposeTouch:()=>void; graphics:any; text:any; hpText:any; moveText:any; presenter:ActorPresenter; }
 function runtime(scene:any):SceneRuntime { return scene.__pollyRuntime as SceneRuntime; }
 function isMoveStage(stage:string):boolean { return stage==='MOVE1'||stage==='MOVE2'; }
 function render(scene:any):void {
@@ -19,7 +20,12 @@ function render(scene:any):void {
   g.lineStyle(2,0x55555d,1); g.strokeRect(40,270,880,210);
   g.fillStyle(0x3b3030,1); g.fillRect(70-offset,210,150,60);
 
-  for(const b of blockDescriptors(w).sort((a,b)=>a.depth-b.depth)){
+  const actors=[w.polly,...w.enemies].sort((a,b)=>a.position.y-b.position.y);
+  r.presenter.removeMissing(actors.map(a=>a.id));
+  const fallbackIds=new Set<string>();
+  for(const actor of actors){ if(r.presenter.syncActor(actor,offset).fallback) fallbackIds.add(actor.id); }
+
+  for(const b of blockDescriptors(w).filter(b=>fallbackIds.has(b.id)).sort((a,b)=>a.depth-b.depth)){
     const sx=b.x-offset, sy=b.y;
     g.fillStyle(0x000000,.35); g.fillEllipse(sx-20,sy-8,40,12);
     g.fillStyle(b.color,1); g.fillRect(sx-b.width/2,sy-b.height,b.width,b.height);
@@ -68,8 +74,9 @@ export const RatHoleScene = {
     const currentKeys=new Set<string>();
     const touchController=new TouchController();
     const disposeTouch=installTouchControls(touchController);
+    const presenter=new ActorPresenter(this);
     this.__pollyRuntime={
-      world,encounter:createRatHoleEncounter(),clock:new FixedStepClock(),currentKeys,previousKeys:new Set<string>(),touchController,disposeTouch,
+      world,encounter:createRatHoleEncounter(),clock:new FixedStepClock(),currentKeys,previousKeys:new Set<string>(),touchController,disposeTouch,presenter,
       graphics:this.add.graphics(),
       text:this.add.text(18,18,'',{fontFamily:'monospace',fontSize:'15px',color:'#eeeeee'}).setScrollFactor(0),
       hpText:this.add.text(18,500,'',{fontFamily:'monospace',fontSize:'16px',color:'#ffffff'}).setScrollFactor(0),
@@ -77,7 +84,7 @@ export const RatHoleScene = {
     } as SceneRuntime;
     this.input.keyboard.on('keydown',(ev:KeyboardEvent)=>currentKeys.add(ev.code));
     this.input.keyboard.on('keyup',(ev:KeyboardEvent)=>currentKeys.delete(ev.code));
-    this.events?.once?.('shutdown',()=>disposeTouch());
+    this.events?.once?.('shutdown',()=>{disposeTouch();presenter.destroy();});
     render(this);
   },
   update(this:any,_time:number,delta:number){
