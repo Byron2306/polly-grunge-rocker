@@ -108,6 +108,63 @@ python -m fusion_lab render-exp001 \
 
 Each `A`, `B1`, `B2`, and `C` directory receives five WAV stems and a mix.
 
+## Generic Fusion Expression Engine
+
+The generic engine keeps these axes independent:
+
+- performer;
+- style trait;
+- technique;
+- compositional function;
+- opportunity;
+- role family;
+- local context.
+
+The governing laws are:
+
+> **STYLE != FUNCTION**
+
+> **TRAIT != TECHNIQUE != FUNCTION != ROLE**
+
+> **SHARED CLOCK != SHARED RHYTHMIC IDENTITY**
+
+A technique may serve multiple functions, a function may be realized by several techniques, and multiple performers may overlap the same broad role family without becoming the same musical job.
+
+## Experiment 002: THRASH CHIMERA
+
+The control is a deterministic **190 BPM**, **4/4**, E-centered Thrash host. The host clock, meter, section structure and Thrash rhythm-guitar identity remain frozen while recruit expressions are added through the generic engine.
+
+Variants:
+
+- **A**: pure Thrash control.
+- **B**: Doom melodic guitarist with sparse multi-note sustains and drone behavior.
+- **C**: Djent thumb/slap bassist with a `3+3+2+3+5` local accent cycle on the shared global clock.
+- **D**: Prog synth using swells, choir-pad texture and filter movement.
+- **E**: Death drummer using double-kick propulsion, blast escalation, dense support, half-time gravity and tom transitions.
+- **F**: all four recruits correctly placed at once.
+- **G**: the same vocabulary under explicit saturation/bad-placement policy.
+
+Generate all seven variants:
+
+```bash
+python -m fusion_lab experiment-002 \
+  --out fusion_lab/out/exp-002
+```
+
+Each variant receives adjusted host-role MIDI layers plus separate performer-owned MIDI layers. The Doom guitarist and Prog synth therefore may both occupy the broad `LEAD_KEYS` family while retaining different instruments and functions.
+
+Render all seven variants:
+
+```bash
+python -m fusion_lab render-exp002 \
+  --root fusion_lab/out/exp-002 \
+  --soundfont "$SOUNDFONT"
+```
+
+Each `A` through `G` directory receives named WAV layers and `mix.wav`.
+
+Experiment 002 remains `UNRESOLVED` until human listening evidence is recorded. The engine proves what changed. It does not decide whether the result is musically successful.
+
 ## Tests
 
 Fusion Lab only:
