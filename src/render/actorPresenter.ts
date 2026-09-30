@@ -25,6 +25,7 @@ export class ActorPresenter {
     if(!sprite){ sprite=this.scene.add.sprite(presentation.x,presentation.y,desired.assetKey); sprite.setOrigin?.(.5,1); this.sprites.set(actor.id,sprite); }
     sprite.setVisible?.(true); sprite.setPosition?.(presentation.x,presentation.y); sprite.setDepth?.(presentation.depth); sprite.setFlipX?.(presentation.flipX);
     if(sprite.texture?.key!==desired.assetKey) sprite.setTexture?.(desired.assetKey);
+    sprite.setFrame?.(desired.frameIndex);
     return presentation;
   }
   removeMissing(actorIds:Iterable<string>):void { const keep=new Set(actorIds); for(const [id,s] of this.sprites){ if(!keep.has(id)){s.destroy?.();this.sprites.delete(id);} } }

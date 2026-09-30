@@ -5,6 +5,7 @@ import { createPickup } from '../../sim/pickups.js';
 import { blockDescriptors, cameraOffsetX, strikeDescriptors } from '../../render/blockRenderer.js';
 import { ActorPresenter } from '../../render/actorPresenter.js';
 import { debugGeometryDescriptors, toggleDebugGeometry, type DebugGeometryMode } from '../../render/debugGeometry.js';
+import { spriteSheetsForManifest } from '../../render/spriteManifest.js';
 import { isDebugTogglePressed, readKeyboardIntent } from '../../input/keyboard.js';
 import { TouchController, mergePlayerIntents } from '../../input/touch.js';
 import { installTouchControls } from '../../input/touchUi.js';
@@ -79,6 +80,9 @@ function combatStep(scene:any,dt:number):void {
 }
 export const RatHoleScene = {
   key:'RatHoleScene',
+  preload(this:any){
+    for(const sheet of spriteSheetsForManifest()) this.load.spritesheet(sheet.assetKey,sheet.path,{frameWidth:sheet.frameWidth,frameHeight:sheet.frameHeight});
+  },
   create(this:any){
     const world=createWorld();
     world.pickups=[createPickup('BOTTLE',230,340),createPickup('MIC_STAND',1320,320)];

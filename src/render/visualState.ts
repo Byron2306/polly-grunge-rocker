@@ -8,13 +8,15 @@ export function visualStateForActor(actor:Actor):VisualStateDescriptor {
   const facing=actor.facing;
   if(actor.kind==='POLLY'){
     if(actor.state==='KO') return {key:'polly.ko',facing,loop:false};
-    if(actor.state==='HURT'||actor.state==='KNOCKBACK'||actor.state==='DOWN') return {key:'polly.hurt',facing,loop:false};
+    if(actor.state==='DOWN') return {key:'polly.knockdown',facing,loop:false};
+    if(actor.state==='HURT'||actor.state==='KNOCKBACK') return {key:'polly.hurt',facing,loop:false};
     if(actor.state==='GETUP') return {key:'polly.getup',facing,loop:false};
     if(actor.state==='ATTACK'&&actor.attack){
       const id=actor.attack.definition.id;
       if(id==='HEAVY') return {key:`polly.heavy.${actor.attack.phase.toLowerCase()}`,facing,loop:false};
       if(/^L[123]$/.test(id)) return {key:`polly.light${id[1]}`,facing,loop:false};
     }
+    if(actor.heldPickupId) return {key:'polly.carry',facing,loop:true};
     const speed=Math.hypot(actor.velocity.x,actor.velocity.y);
     if(speed>=180) return {key:'polly.sprint',facing,loop:true};
     if(speed>1) return {key:'polly.walk',facing,loop:true};
