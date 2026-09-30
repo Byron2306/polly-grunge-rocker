@@ -8,3 +8,5 @@ export const SPRINT_RATIO = 1.55;
 export const INPUT_BUFFER_MS = 180;
 export const COMBO_RESET_MS = 300;
 export const KNOCKDOWN_INVULN_MS = 350;
+export const WALKABLE_Y_MIN = 330;
+export const WALKABLE_Y_MAX = 485;

@@ -5,6 +5,7 @@ import { AttackTokenPool } from './tokens.js';
 import type { PickupState } from './pickups.js';
 import { usePickup } from './pickups.js';
 import { resolveAttackHit } from './combat.js';
+import { WALKABLE_Y_MIN, WALKABLE_Y_MAX } from './constants.js';
 
 export interface WorldState { polly:Actor; enemies:Actor[]; pickups:PickupState[]; tokens:AttackTokenPool; elapsedMs:number; sliceComplete:boolean; }
 export function createWorld():WorldState { return {polly:createPolly(),enemies:[],pickups:[],tokens:new AttackTokenPool(2),elapsedMs:0,sliceComplete:false}; }
@@ -18,6 +19,15 @@ export function separateBodies(actors:Actor[]):void {
       const push=(minX-Math.abs(dx))/2;
       const sign=dx===0?(a.id<b.id?1:-1):Math.sign(dx);
       a.position.x-=sign*push; b.position.x+=sign*push;
+    }
+  }
+}
+export function clampActorsToWalkBand(actors:Actor[]):void {
+  for(const actor of actors){
+    actor.position.y=Math.max(WALKABLE_Y_MIN,Math.min(WALKABLE_Y_MAX,actor.position.y));
+    if((actor.position.y===WALKABLE_Y_MIN && actor.velocity.y<0) ||
+       (actor.position.y===WALKABLE_Y_MAX && actor.velocity.y>0)){
+      actor.velocity.y=0;
     }
   }
 }
@@ -60,5 +70,6 @@ export function stepWorld(world:WorldState,intent:PlayerIntent,dtMs:number):void
   for(const enemy of world.enemies) updateEnemy(enemy,{polly:world.polly,tokens:world.tokens,seed01:.5},dtMs);
   resolveEnemyCombat(world,dtMs);
   separateBodies([world.polly,...world.enemies]);
+  clampActorsToWalkBand([world.polly,...world.enemies]);
   const held=world.pickups.find(p=>p.id===world.polly.heldPickupId); if(held){held.x=world.polly.position.x;held.y=world.polly.position.y;}
 }

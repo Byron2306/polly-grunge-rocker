@@ -2,26 +2,33 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { framesForVisualState, productionSpriteSheets } from '../src/render/spriteManifest.js';
 
-const pollyStates=['polly.idle','polly.walk','polly.sprint','polly.light1','polly.light2','polly.light3','polly.heavy.startup','polly.heavy.active','polly.heavy.recovery','polly.hurt','polly.knockdown','polly.getup','polly.carry','polly.victory','polly.ko'];
+const pollyStates=[
+  'polly.idle','polly.walk','polly.sprint','polly.light1','polly.light2','polly.light3',
+  'polly.heavy.startup','polly.heavy.active','polly.heavy.recovery',
+  'polly.hurt','polly.knockdown','polly.getup','polly.carry','polly.victory','polly.ko'
+];
+const enemyStates=['idle','walk','threaten','attack','hurt','ko'];
 
-test('sprite manifest maps every Polly state to one shared production master',()=>{
+test('Polly states share one production master',()=>{
   const defs=pollyStates.map(framesForVisualState);
   assert.equal(defs.every(d=>d.frames.length===1),true);
-  const refs=defs.map(d=>d.frames[0]);
-  assert.equal(new Set(refs.map(r=>`${r.assetKey}:${r.path}:${r.frameIndex}`)).size,1);
-  assert.equal(refs[0].path,'assets/characters/polly/polly-master.png');
+  assert.equal(new Set(defs.map(d=>d.frames[0].assetKey)).size,1);
+  assert.equal(defs[0].frames[0].assetKey,'characters.polly.master');
 });
 
-test('sprite manifest falls back safely when no production master exists',()=>{
-  const d=framesForVisualState('glam.attack');
-  assert.equal(d.key,'fallback');
-  assert.equal(d.frames.length,0);
+test('Glam Prog and Punk each share one production master',()=>{
+  for(const family of ['glam','prog','punk']){
+    const defs=enemyStates.map(state=>framesForVisualState(`${family}.${state}`));
+    assert.equal(defs.every(d=>d.frames.length===1),true,family);
+    assert.equal(new Set(defs.map(d=>d.frames[0].assetKey)).size,1,family);
+  }
 });
 
-test('only Polly production master is preloaded in the production-master slice',()=>{
+test('Phase2B.1 preloads four 128px production masters',()=>{
   const sheets=productionSpriteSheets();
-  assert.equal(sheets.length,1);
-  assert.equal(sheets[0].assetKey,'characters.polly.master');
-  assert.equal(sheets[0].frameWidth,160);
-  assert.equal(sheets[0].frameHeight,160);
+  assert.deepEqual(
+    sheets.map(s=>s.assetKey),
+    ['characters.polly.master','enemies.glam.master','enemies.prog.master','enemies.punk.master']
+  );
+  assert.equal(sheets.every(s=>s.frameWidth===128&&s.frameHeight===128),true);
 });
