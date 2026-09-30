@@ -2,6 +2,7 @@ declare module 'node:test' { const test: (name: string, fn: () => void | Promise
 declare module 'node:assert/strict' {
   const assert: {
     equal(actual: unknown, expected: unknown, message?: string): void;
+    notEqual(actual: unknown, expected: unknown, message?: string): void;
     deepEqual(actual: unknown, expected: unknown, message?: string): void;
     ok(value: unknown, message?: string): asserts value;
   };
