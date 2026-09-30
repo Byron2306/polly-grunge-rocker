@@ -1,6 +1,7 @@
 import type { PlayerIntent } from '../sim/types.js';
 
 function down(keys: ReadonlySet<string>, ...codes: string[]): boolean { return codes.some(c => keys.has(c)); }
+export function isDebugTogglePressed(current:ReadonlySet<string>,previous:ReadonlySet<string>):boolean { return current.has('F2')&&!previous.has('F2'); }
 export function readKeyboardIntent(current: ReadonlySet<string>, previous: ReadonlySet<string>): PlayerIntent {
   const edge = (code: string) => current.has(code) && !previous.has(code);
   return {

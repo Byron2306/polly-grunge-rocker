@@ -4,12 +4,13 @@ import { createRatHoleEncounter, updateEncounter } from '../../sim/encounters.js
 import { createPickup } from '../../sim/pickups.js';
 import { blockDescriptors, cameraOffsetX, strikeDescriptors } from '../../render/blockRenderer.js';
 import { ActorPresenter } from '../../render/actorPresenter.js';
-import { readKeyboardIntent } from '../../input/keyboard.js';
+import { debugGeometryDescriptors, toggleDebugGeometry, type DebugGeometryMode } from '../../render/debugGeometry.js';
+import { isDebugTogglePressed, readKeyboardIntent } from '../../input/keyboard.js';
 import { TouchController, mergePlayerIntents } from '../../input/touch.js';
 import { installTouchControls } from '../../input/touchUi.js';
 import { isGameplayInputBlocked } from '../../platform/mobileShell.js';
 
-interface SceneRuntime { world:ReturnType<typeof createWorld>; encounter:ReturnType<typeof createRatHoleEncounter>; clock:FixedStepClock; currentKeys:Set<string>; previousKeys:Set<string>; touchController:TouchController; disposeTouch:()=>void; graphics:any; text:any; hpText:any; moveText:any; presenter:ActorPresenter; }
+interface SceneRuntime { world:ReturnType<typeof createWorld>; encounter:ReturnType<typeof createRatHoleEncounter>; clock:FixedStepClock; currentKeys:Set<string>; previousKeys:Set<string>; touchController:TouchController; disposeTouch:()=>void; graphics:any; text:any; hpText:any; moveText:any; presenter:ActorPresenter; debugMode:DebugGeometryMode; }
 function runtime(scene:any):SceneRuntime { return scene.__pollyRuntime as SceneRuntime; }
 function isMoveStage(stage:string):boolean { return stage==='MOVE1'||stage==='MOVE2'; }
 function render(scene:any):void {
@@ -52,7 +53,16 @@ function render(scene:any):void {
     g.fillStyle(p.kind==='BOTTLE'?0x55aa77:0xaaaaaa,1);
     g.fillRect(p.x-offset-5,p.y-24,10,24);
   }
-  r.text.setText(`STATE ${w.polly.state}  COMBO ${w.polly.comboIndex}  WAVE ${r.encounter.stage}\nJ / LIGHT   K / HEAVY   L / USE   SHIFT / RUN`);
+
+  if(r.debugMode==='GEOMETRY'){
+    for(const d of debugGeometryDescriptors(w)){
+      const color=d.kind==='BODY'?0x55ccff:d.kind==='HURT'?0x66ff88:0xffee55;
+      g.lineStyle(d.kind==='ATTACK'?3:2,color,.95);
+      g.strokeRect(d.x-offset,d.y,d.width,d.height);
+    }
+  }
+
+  r.text.setText(`STATE ${w.polly.state}  COMBO ${w.polly.comboIndex}  WAVE ${r.encounter.stage}\nJ / LIGHT   K / HEAVY   L / USE   SHIFT / RUN   F2 / DEBUG`);
   r.hpText.setText(`POLLY HP ${w.polly.hp.toFixed(1)} / ${w.polly.maxHp}`);
   r.moveText.setText(isMoveStage(r.encounter.stage)?'MOVE  >>>':'' );
   r.moveText.setVisible(isMoveStage(r.encounter.stage));
@@ -60,6 +70,7 @@ function render(scene:any):void {
 }
 function combatStep(scene:any,dt:number):void {
   const r=runtime(scene);
+  if(isDebugTogglePressed(r.currentKeys,r.previousKeys)){ r.debugMode=toggleDebugGeometry(r.debugMode); r.presenter.setDebugGeometry(r.debugMode==='GEOMETRY'); }
   const intent=mergePlayerIntents(readKeyboardIntent(r.currentKeys,r.previousKeys),r.touchController.consumeIntent());
   if(isMoveStage(r.encounter.stage) && intent.moveX>0) intent.sprint=true;
   stepWorld(r.world,intent,dt);
@@ -76,7 +87,7 @@ export const RatHoleScene = {
     const disposeTouch=installTouchControls(touchController);
     const presenter=new ActorPresenter(this);
     this.__pollyRuntime={
-      world,encounter:createRatHoleEncounter(),clock:new FixedStepClock(),currentKeys,previousKeys:new Set<string>(),touchController,disposeTouch,presenter,
+      world,encounter:createRatHoleEncounter(),clock:new FixedStepClock(),currentKeys,previousKeys:new Set<string>(),touchController,disposeTouch,presenter,debugMode:'AESTHETIC',
       graphics:this.add.graphics(),
       text:this.add.text(18,18,'',{fontFamily:'monospace',fontSize:'15px',color:'#eeeeee'}).setScrollFactor(0),
       hpText:this.add.text(18,500,'',{fontFamily:'monospace',fontSize:'16px',color:'#ffffff'}).setScrollFactor(0),
