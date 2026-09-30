@@ -1,14 +1,32 @@
 from __future__ import annotations
-import hashlib, json, shutil, subprocess
+import hashlib, json, os, shutil, subprocess
 from pathlib import Path
 from typing import Mapping
-from .production_model import ProductionConfig, ToneProfile, InstrumentProfile
+from .production_model import ProductionConfig, ToneProfile, InstrumentProfile, ArticulationMap, ToneStage
 
 def _sha256(path:Path)->str:
     h=hashlib.sha256()
     with Path(path).open('rb') as f:
         for chunk in iter(lambda:f.read(1024*1024),b''): h.update(chunk)
     return h.hexdigest()
+
+def _expand_path(value:str)->Path:
+    return Path(os.path.expandvars(os.path.expanduser(value)))
+
+def load_instrument_profiles(path:Path)->dict[str,InstrumentProfile]:
+    raw=json.loads(Path(path).read_text())
+    out={}
+    for layer,row in raw['layers'].items():
+        arts={name:ArticulationMap(name=name,keyswitch=cfg.get('keyswitch'),midi_channel=cfg.get('midi_channel'),velocity_min=cfg.get('velocity_min',1),velocity_max=cfg.get('velocity_max',127)) for name,cfg in row['articulations'].items()}
+        out[layer]=InstrumentProfile(row['id'],row['role'],_expand_path(row['sfz_path']),arts,row['source_id'],row.get('source_version'))
+    return out
+
+def load_tone_profiles(path:Path)->dict[str,ToneProfile]:
+    raw=json.loads(Path(path).read_text()); out={}
+    for layer,row in raw['layers'].items():
+        stages=tuple(ToneStage(s['kind'],s.get('executable'),tuple(s.get('args',())),_expand_path(s['asset_path']) if s.get('asset_path') else None) for s in row.get('stages',()))
+        out[layer]=ToneProfile(row['id'],stages,float(row.get('pan',0.0)),float(row.get('width',1.0)))
+    return out
 
 def check_production_dependencies(config:ProductionConfig, instruments:Mapping[str,InstrumentProfile]|None=None, tone_profiles:Mapping[str,ToneProfile]|None=None)->None:
     if shutil.which(config.sfizz_executable) is None:
