@@ -1,141 +1,333 @@
 # Polly Grunge Rocker — Pattern Map Programme Roadmap
 
-**Date:** 2026-09-30
-**Status:** APPROVED DESIGN → IMPLEMENTATION PROGRAMME
+**Date:** 2026-09-30  
+**Status:** APPROVED ARCHITECTURE → STAGED IMPLEMENTATION PROGRAMME  
+**Canonical architecture:** `docs/superpowers/specs/2026-09-30-pattern-map-combat-architecture.md`
 
-## Programme Order
+## Programme Objective
 
-### 0. Rat Hole closeout
-- Tighten upper walk boundary based on accepted screenshot.
-- Re-run local combat gauntlet.
-- Freeze Phase 2B.1 as the visual/combat baseline.
+Build a deterministic music-driven belt-scroller in which:
 
-### 1. Phase 2C — Rat Hole Visual Upgrade
-Goal: replace the current flat staging with the grimy, neon, wet, violent visual language established in the approved mockup.
+- Rat Hole teaches the shared musical grammar and assembles Polly's guaranteed Grunge starter band;
+- later genre worlds reinterpret that grammar rather than replacing it;
+- optional recruits bring persistent stylistic identities and learn where their vocabulary fits;
+- learned ally techniques become automatic when current coherence and Pattern Map opportunity support them;
+- party composition becomes audible through controlled cross-genre fusion;
+- the host song always remains structurally authoritative.
 
-No Pattern Map runtime work lands here. Phase 2C must preserve the combat baseline.
+Core rules:
+
+> **MAP THE PATTERNS.**
+
+> **STRUCTURE IS SHARED. STYLE IS PERSONAL.**
+
+> **The song tells you where. The musician tells you how.**
+
+---
+
+## Phase Order
+
+### 0. Proven Combat Baseline — COMPLETE
+
+Preserve the accepted Phase 1 / Phase 2B.1 beat-'em-up feel:
+
+- free X/Y belt movement;
+- light chain and heavy guitar attack;
+- hitstop, hitstun, knockback and tokenized enemy pressure;
+- mobile controls;
+- approved Polly and enemy master sprites;
+- corrected walk band.
+
+The music programme may extend this baseline but must not replace it.
+
+### 1. Rat Hole Production Art
+
+Replace the flat placeholder environment with the approved painterly pixel-art language.
+
+Production goals:
+
+- Rat Hole reads immediately as Polly's Grunge home turf;
+- one continuous physical venue/alley progresses through teaching spaces;
+- wet asphalt, practical light, grime, layered masonry, posters, pipes, fences, clutter and meaningful foreground depth;
+- combat readability remains stronger than decoration;
+- no procedural-flat or early-adventure-game aesthetic.
+
+This phase changes presentation only.
 
 ### 2. Pattern Map Foundation
-Build deterministic track-map data structures, validation, querying, fixtures and inspection tooling.
 
-This is the first implementation plan attached to this roadmap.
+Build pure deterministic TypeScript domain structures for:
+
+- tempo and meter regions;
+- sections and phrases;
+- the five musical roles;
+- per-role pattern events;
+- cross-layer alignments;
+- deterministic queries by explicit track time;
+- validation, import and human inspection.
+
+No Phaser and no WebAudio dependency.
+
+Existing plan: `docs/superpowers/plans/2026-09-30-pattern-map-foundation.md`.
 
 ### 3. Pattern Map Authoring / Analysis Tool
-Build the tool that ingests stems/MIDI/audio and assists with:
-- BPM/downbeat detection
-- meter candidates
-- onset/transient extraction
-- repeated pattern candidates
-- phrase/riff annotations
-- cross-layer alignment candidates
-- manual correction and export
 
-Human review remains final authority.
+Build the human-in-the-loop tool used to create production maps from stems, MIDI and rendered audio.
 
-### 4. Audio Clock + Runtime Synchronization
-Create a single authoritative track clock and deterministic mapping between:
-- audio time
-- Pattern Map time
-- simulation time
-- beat/bar/phrase position
+Assist with:
 
-No gameplay advantage is added yet. This phase proves timing truth.
+- BPM and downbeat candidates;
+- meter candidates;
+- transient/onset extraction;
+- repeated-cell detection;
+- phrase and riff candidates;
+- section boundaries;
+- cross-layer alignment candidates;
+- confidence visualization;
+- manual correction;
+- deterministic export.
 
-### 5. Musical Input Evaluation
-Evaluate attacks against Pattern Map windows:
-- acceptable
-- on-pattern
-- accent-perfect
-- phrase-perfect
-- alignment-perfect
+Automatic analysis remains advisory. Human correction is authoritative.
 
-Keep existing combat moves intact while adding timing metadata.
+### 4. Fusion Lab
 
-### 6. Soft Combat Lanes
-Interpret the existing free Y-axis as upper/middle/lower tactical bands without turning movement into rigid rails.
+Before runtime fusion exists, experimentally establish which cross-genre treatments actually work by ear.
+
+Use generated or authored musical experiments, including Suno where useful, to test host/guest combinations such as:
+
+- Glam + Black Metal tremolo;
+- Punk + Death Metal blast fills;
+- Thrash + Doom bass sustain;
+- Prog + Punk drums;
+- Grunge + Black Metal vocals;
+- Doom + Glam harmonies.
+
+For each experiment record:
+
+- host genre and structural context;
+- guest technique;
+- where the contribution works;
+- where it hijacks or muddies the host;
+- suitable duration and density;
+- whether compatibility is Native, Fusion or Clash;
+- reusable rules that can later become runtime data.
+
+Exit with a small validated technique compatibility corpus rather than theory-only assumptions.
+
+### 5. Authoritative Audio Clock
+
+Create one source of timing truth connecting:
+
+- audio playback time;
+- Pattern Map time;
+- simulation time;
+- beat, bar, phrase and section position.
+
+Prove pause/resume, seek and frame-rate variation without adding gameplay bonuses yet.
+
+### 6. Musical Input Evaluation
+
+Evaluate Polly's existing attacks against Pattern Map windows.
+
+Initial result vocabulary:
+
+- acceptable;
+- on-pattern;
+- accent-perfect;
+- phrase-perfect;
+- alignment-perfect.
+
+Existing combat moves and damage remain intact. This phase adds timing interpretation, not a new combat game.
+
+### 7. Rat Hole Grunge Scaffolding
+
+Rebuild Rat Hole encounters around home-scene musicians rather than Glam/Punk/Prog tutorial enemies.
+
+Progression:
+
+1. Polly alone — timing, riff repetition and phrase anticipation;
+2. Drummer — pulse, beat, subdivision and accent;
+3. Bassist — groove, lane stability and continuity;
+4. Rhythm Guitarist — repeated cells, structure and phrase commitment;
+5. Vocalist — call/response, interruption and response timing;
+6. Full-band finale — all five layers together.
+
+The four Grunge musicians are guaranteed story recruits.
+
+### 8. Party and Soft-Lane Foundation
+
+Add a five-member party model while preserving free belt-scroller movement.
 
 Add:
-- lane occupancy
-- lane transitions
-- cross-lane targeting
-- lane-aware attack metadata
 
-### 7. Performance Score
-Score clean play:
-- timing
-- damage avoidance
-- efficiency
-- phrase completion
-- lane control
-- interrupts
-- expressive combat
+- musical role identity;
+- approximate upper/middle/lower tactical bands;
+- ally lane tendencies;
+- contextual repositioning;
+- no RTS micromanagement requirement.
 
-Prevent score farming.
+Polly remains directly controlled.
 
-### 8. Recruitment
-Use performance output between encounters to recruit:
-- named recurring allies
-- temporary locals
+### 9. Performance and Coherence
 
-Recruits are musical-role capabilities, not generic stat sticks.
+Create two distinct systems:
 
-### 9. Ally AI + Coherence
-Allies fight autonomously according to:
-- musical role
-- lane tendency
-- learned patterns
-- current synchronization
+**Performance** evaluates what happened across an encounter.
 
-Add player-side and enemy-side coherence.
+**Coherence** represents current shared band understanding during play.
 
-### 10. Teaching Recruits
-Polly can step into another musical role/lane and demonstrate the correct pattern.
+Inputs may include:
 
-Successful demonstration increases a recruit's confidence in that pattern.
+- timing;
+- phrase continuity;
+- lane coordination;
+- useful interrupts;
+- damage avoidance;
+- ally joins;
+- cross-layer recognition.
 
-This is where Polly becomes fighter + guitarist + bandleader.
+Coherence must not degrade into a generic special meter.
 
-### 11. Musical Chains
-Build multi-layer combat chains and synchronized finishers.
+### 10. Teaching and Learning
 
-Chains care about:
-- timing
-- phrase continuity
-- layer alignment
-- ally joins
-- lane relationships
+Implement explicit Polly-to-recruit teaching.
 
-Not merely hit count.
+Polly demonstrates where a recruit's own vocabulary fits the current structure.
 
-### 12. Genre Authoring
-Author the shared five-role grammar across:
-- Grunge
-- Punk
-- Glam
-- Thrash
-- Prog
+Persist separately:
 
-Each genre changes the timing language while preserving transferable role meaning.
+- learned pattern-technique relationships;
+- confidence/knowledge;
+- host-genre familiarity.
 
-### 13. Prog Murder Chamber
-Create the deliberately complex Prog stress-test track.
+Do not modify a musician's core identity merely because they learned another genre.
 
-The encounter should prove:
-- odd meter
-- overlapping layer patterns
-- displaced accents
-- phrase cycles
-- cross-layer convergence
+### 11. Technique Vocabulary
 
-The player must be able to learn it without knowing formal theory vocabulary.
+Formalize musician-specific stylistic techniques.
 
-## Non-Negotiable Rule
+Examples:
 
-Each stage must ship as a playable proof before the next layer of architecture is allowed to depend on it.
+- Tremolo Picking;
+- Blast-Beat Lock;
+- Palm-Mute Precision;
+- Sustained Doom Resolution;
+- Falsetto Call;
+- Growl Projection;
+- Shriek Accent;
+- Odd-Meter Literacy.
+
+A technique defines structural compatibility and performance treatment. It is not simply a damage modifier.
+
+### 12. Automatic Opportunity Resolution
+
+Once a recruit has learned a relationship, technique use becomes autonomous.
+
+Automatic expression requires:
+
+- learned relationship;
+- valid Pattern Map opportunity;
+- sufficient familiarity;
+- sufficient current coherence.
+
+Low coherence produces safe/basic contributions. High coherence permits more ambitious stylistic expression.
+
+### 13. Fusion Audio Realization
+
+Turn validated technique opportunities into audible musical contributions.
+
+The host track remains authoritative.
+
+Implement a bounded audio realization system using authored stems, one-shots, phrase variants or other pre-produced material chosen from runtime context.
+
+Do not depend on live generative AI during gameplay.
+
+The same structural event may receive different stylistic treatments depending on the active recruit.
+
+### 14. Conditional Recruitment
+
+After Rat Hole, make recruitment performance- and encounter-dependent.
+
+Candidates may come from:
+
+- the current level genre;
+- other genres;
+- support acts;
+- backstage encounters;
+- secret gigs;
+- returning characters.
+
+Recruit choice should be horizontal: different musical possibilities, not progressively higher-level replacements.
+
+### 15. Musical Chains
+
+Build multi-role combat chains that care about:
+
+- phrase continuity;
+- layer alignment;
+- timing quality;
+- ally joins;
+- lane relationships;
+- learned techniques;
+- coherence.
+
+Do not reduce this to hit count.
+
+### 16. Glam / Punk / Thrash World Authoring
+
+Build each campaign genre as a complete visual and musical world using the same five-role grammar.
+
+- **Glam:** theatrical timing, bait, flourish and obvious accent language.
+- **Punk:** direct pulse, aggression, interruption and pressure.
+- **Thrash:** speed, subdivision density and precision.
+
+Each world must ship as its own playable proof before the next is authored.
+
+### 17. Black Metal / Death Metal / Doom Recruit Expansion
+
+Add optional cross-genre musician vocabularies without requiring full campaign worlds.
+
+Use Fusion Lab evidence to author techniques and compatibility.
+
+Examples:
+
+- Black Metal tremolo and shriek textures;
+- Death Metal blast-beat and growl vocabulary;
+- Doom sustain, drone and heavy-resolution vocabulary.
+
+### 18. Prog Murder Chamber
+
+Build the deliberate end-stage systems stress test.
+
+Prove:
+
+- odd meter;
+- polymeter/polyrhythm;
+- displaced accents;
+- long phrase cycles;
+- overlapping cells;
+- convergence points;
+- recruit familiarity;
+- automatic learned fusion;
+- readable player learning without theory vocabulary.
+
+Thrash is physically savage. Prog is cognitively savage.
+
+---
+
+## Ship Gates
+
+Every phase must satisfy all four before the next phase may depend on it:
+
+1. **Playable or inspectable proof** exists.
+2. **Deterministic tests** cover its core contract where applicable.
+3. **Human review** confirms the intended feel or musical result.
+4. **No regression** to the proven beat-'em-up baseline.
 
 No giant rewrite.
 No rhythm-game note highway.
 No theory exam.
-No replacement of the proven beat-'em-up combat feel.
+No runtime dependence on Suno or another cloud generative service.
+No recruit style may overwrite the host song's structural authority.
 
-**MAP THE PATTERNS.**
+The eventual fever dream is allowed to be complex. The implementation path is not.
