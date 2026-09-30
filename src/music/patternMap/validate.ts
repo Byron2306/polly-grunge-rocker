@@ -1,4 +1,4 @@
-import type { MusicalRole, PatternMap, PatternEvent } from './types.js';
+import type { LayerMap, MusicalRole, PatternMap, PatternEvent } from './types.js';
 
 export interface PatternMapValidationIssue { code:string; path:string; message:string }
 export interface PatternMapValidationResult { ok:boolean; issues:PatternMapValidationIssue[] }
@@ -53,7 +53,7 @@ export function validatePatternMap(map:PatternMap):PatternMapValidationResult {
 
   const eventsById=new Map<string,PatternEvent>();
   for(const role of ROLES){
-    const layer=(map.layers as Partial<Record<MusicalRole,typeof map.layers[MusicalRole]>>)[role];
+    const layer=(map.layers as Partial<Record<MusicalRole,LayerMap>>)[role];
     if(!layer){
       issue(issues,'MISSING_LAYER',`layers.${role}`,`missing canonical layer ${role}`);
       continue;
