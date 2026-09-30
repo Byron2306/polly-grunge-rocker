@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { detectOnsetCandidates } from '../src/music/authoring/onsets.js';
 import { inferTempoCandidates } from '../src/music/authoring/tempo.js';
+import { findAlignmentCandidates } from '../src/music/authoring/align.js';
+import type { AnalysisCandidate } from '../src/music/authoring/types.js';
 import type { PcmWav } from '../src/music/authoring/wav.js';
 
 function pulseWav(timesMs:number[],durationMs=4000):PcmWav{
@@ -30,4 +32,33 @@ test('tempo inference keeps 120 plus half-time and double-time suggestions separ
   assert.ok(a.some(x=>Math.abs((x.bpm??0)-60)<1));
   assert.ok(a.some(x=>Math.abs((x.bpm??0)-240)<1));
   assert.ok((a[0].confidence??0)>=.7);
+});
+
+const c=(id:string,role:'DRUMS'|'BASS'|'RHYTHM_GUITAR',startMs:number,confidence=.8):AnalysisCandidate=>({
+  id,kind:'ONSET',confidence,sourceId:role.toLowerCase(),role,startMs,endMs:startMs+20,eventKind:'ONSET',
+});
+
+test('alignment clustering counts unique roles inside tolerance and ignores same-role inflation',()=>{
+  const candidates=[c('d1','DRUMS',1000),c('d2','DRUMS',1005),c('b1','BASS',1020),c('r1','RHYTHM_GUITAR',1035)];
+  const out=findAlignmentCandidates(candidates,40,3);
+  assert.equal(out.length,1);
+  assert.equal(out[0].kind,'ALIGNMENT');
+  assert.equal(out[0].relatedCandidateIds?.includes('d1'),true);
+  assert.equal(out[0].relatedCandidateIds?.includes('d2'),false);
+  assert.equal(out[0].relatedCandidateIds?.includes('b1'),true);
+  assert.equal(out[0].relatedCandidateIds?.includes('r1'),true);
+});
+
+test('alignment clustering rejects outside tolerance and remains deterministic and bounded',()=>{
+  const far=[c('d','DRUMS',1000),c('b','BASS',1100),c('r','RHYTHM_GUITAR',1200)];
+  assert.deepEqual(findAlignmentCandidates(far,40,3),[]);
+  const dense:AnalysisCandidate[]=[];
+  for(let i=0;i<50;i++){
+    const base=i*100;
+    dense.push(c(`d${i}`,'DRUMS',base),c(`b${i}`,'BASS',base+10),c(`r${i}`,'RHYTHM_GUITAR',base+20));
+  }
+  const a=findAlignmentCandidates(dense,40,3);
+  const b=findAlignmentCandidates(dense,40,3);
+  assert.deepEqual(a,b);
+  assert.ok(a.length<=50);
 });
