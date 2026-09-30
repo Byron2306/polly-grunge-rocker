@@ -1,0 +1,10 @@
+{
+  "schema": "polly.fusion-lab.instrument-profiles.v1",
+  "layers": {
+    "rhythm_guitar_L": {"id":"guitar-sfz","role":"RHYTHM_GUITAR","sfz_path":"${FUSION_INSTRUMENT_ROOT}/guitar/guitar.sfz","source_id":"operator-guitar-sfz","articulations":{"PALM_MUTE_DOWNPICK":{"keyswitch":24},"PALM_MUTE_GALLOP":{"keyswitch":24},"CHROMATIC_POWER":{"keyswitch":25},"OPEN_RELEASE":{"keyswitch":25}}},
+    "rhythm_guitar_R": {"id":"guitar-sfz","role":"RHYTHM_GUITAR","sfz_path":"${FUSION_INSTRUMENT_ROOT}/guitar/guitar.sfz","source_id":"operator-guitar-sfz","articulations":{"PALM_MUTE_DOWNPICK":{"keyswitch":24},"PALM_MUTE_GALLOP":{"keyswitch":24},"CHROMATIC_POWER":{"keyswitch":25},"OPEN_RELEASE":{"keyswitch":25}}},
+    "bass": {"id":"bass-sfz","role":"BASS","sfz_path":"${FUSION_INSTRUMENT_ROOT}/bass/bass.sfz","source_id":"operator-bass-sfz","articulations":{"PICKED_FOLLOW":{},"PHRASE_END_FILL":{}}},
+    "drums": {"id":"drums-sfz","role":"DRUMS","sfz_path":"${FUSION_INSTRUMENT_ROOT}/drums/drums.sfz","source_id":"operator-drums-sfz","articulations":{"THRASH_SKANK":{},"THRASH_KICK":{},"CHORUS_BACKBEAT":{},"DOUBLE_KICK_ESCALATION":{},"THRASH_HALF_TIME":{},"RIDE":{},"TOM_FILL":{}}},
+    "lead_guitar": {"id":"lead-guitar-sfz","role":"LEAD_KEYS","sfz_path":"${FUSION_INSTRUMENT_ROOT}/guitar/guitar.sfz","source_id":"operator-guitar-sfz","articulations":{"LEAD_SUSTAIN":{"keyswitch":25},"LEAD_VIBRATO":{"keyswitch":26},"LEAD_FAST_RUN":{"keyswitch":25},"LEAD_PEAK":{"keyswitch":26}}}
+  }
+}
