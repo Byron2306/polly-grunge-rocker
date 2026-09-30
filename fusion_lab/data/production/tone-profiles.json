@@ -1,0 +1,11 @@
+{
+  "schema":"polly.fusion-lab.tone-profiles.v1",
+  "profile_family":"THRASH_1988",
+  "layers":{
+    "rhythm_guitar_L":{"id":"THRASH_1988_GTR_L","pan":-0.92,"width":1.0,"stages":[{"kind":"amp_eq_drive","executable":"ffmpeg","args":["-y","-i","{in}","-af","highpass=f=75,equalizer=f=750:t=q:w=1:g=2,equalizer=f=3500:t=q:w=1:g=1.5,asoftclip=type=tanh:threshold=0.65:output=0.85","-c:a","pcm_s16le","{out}"]},{"kind":"cab_ir","executable":"ffmpeg","asset_path":"${FUSION_INSTRUMENT_ROOT}/ir/thrash-cab.wav","args":["-y","-i","{in}","-i","{asset}","-filter_complex","[0:a][1:a]afir=dry=0:wet=1","-c:a","pcm_s16le","{out}"]}]},
+    "rhythm_guitar_R":{"id":"THRASH_1988_GTR_R","pan":0.92,"width":1.0,"stages":[{"kind":"amp_eq_drive","executable":"ffmpeg","args":["-y","-i","{in}","-af","highpass=f=75,equalizer=f=820:t=q:w=1:g=1.5,equalizer=f=3650:t=q:w=1:g=1.2,asoftclip=type=tanh:threshold=0.67:output=0.84","-c:a","pcm_s16le","{out}"]},{"kind":"cab_ir","executable":"ffmpeg","asset_path":"${FUSION_INSTRUMENT_ROOT}/ir/thrash-cab.wav","args":["-y","-i","{in}","-i","{asset}","-filter_complex","[0:a][1:a]afir=dry=0:wet=1","-c:a","pcm_s16le","{out}"]}]},
+    "bass":{"id":"THRASH_1988_BASS","pan":0.0,"width":1.0,"stages":[{"kind":"bass_eq_comp","executable":"ffmpeg","args":["-y","-i","{in}","-af","highpass=f=35,equalizer=f=180:t=q:w=1:g=2,equalizer=f=900:t=q:w=1:g=1.5,acompressor=threshold=-15dB:ratio=3:attack=10:release=80","-c:a","pcm_s16le","{out}"]}]},
+    "drums":{"id":"THRASH_1988_DRUMS","pan":0.0,"width":1.0,"stages":[{"kind":"drum_bus","executable":"ffmpeg","args":["-y","-i","{in}","-af","acompressor=threshold=-12dB:ratio=2.5:attack=8:release=70","-c:a","pcm_s16le","{out}"]}]},
+    "lead_guitar":{"id":"THRASH_1988_LEAD","pan":0.08,"width":1.0,"stages":[{"kind":"lead_drive","executable":"ffmpeg","args":["-y","-i","{in}","-af","highpass=f=90,equalizer=f=1200:t=q:w=1:g=2,asoftclip=type=tanh:threshold=0.7:output=0.82","-c:a","pcm_s16le","{out}"]},{"kind":"cab_ir","executable":"ffmpeg","asset_path":"${FUSION_INSTRUMENT_ROOT}/ir/thrash-cab.wav","args":["-y","-i","{in}","-i","{asset}","-filter_complex","[0:a][1:a]afir=dry=0:wet=1","-c:a","pcm_s16le","{out}"]}]}
+  }
+}
