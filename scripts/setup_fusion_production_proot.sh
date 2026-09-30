@@ -8,7 +8,7 @@ SFIZZ_SRC="$SRC_ROOT/sfizz-$SFIZZ_VERSION"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y git cmake ninja-build build-essential pkg-config libsndfile1-dev libsamplerate0-dev libjack-jackd2-dev libx11-dev ffmpeg sox ca-certificates
+apt-get install -y git cmake ninja-build build-essential pkg-config libsndfile1-dev libsamplerate0-dev ffmpeg sox ca-certificates
 
 mkdir -p "$SRC_ROOT" "$PREFIX/bin"
 
@@ -30,6 +30,8 @@ cmake -S "$SFIZZ_SRC" -B "$SFIZZ_SRC/build" \
   -DCMAKE_BUILD_TYPE=Release \
   -DSFIZZ_RENDER=ON \
   -DSFIZZ_JACK=OFF \
+  -DSFIZZ_TESTS=OFF \
+  -DSFIZZ_DEMOS=OFF \
   -DBUILD_TESTING=OFF
 cmake --build "$SFIZZ_SRC/build" --target sfizz_render
 
