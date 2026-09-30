@@ -1,0 +1,23 @@
+{
+  "schema": "polly.fusion-lab.experiment.v2",
+  "id": "exp-002-thrash-chimera",
+  "host_id": "host-002-thrash-control",
+  "laws": [
+    "STYLE != FUNCTION",
+    "TRAIT != TECHNIQUE != FUNCTION != ROLE",
+    "SHARED CLOCK != SHARED RHYTHMIC IDENTITY"
+  ],
+  "hypothesis": "Specific trait x technique x function x context relationships can coexist coherently inside a frozen Thrash host.",
+  "variants": ["A", "B", "C", "D", "E", "F", "G"],
+  "variant_graph": {
+    "A": "pure thrash control",
+    "B": "doom melodic guitarist only",
+    "C": "djent thumb/slap bassist only",
+    "D": "prog synth only",
+    "E": "death drummer only",
+    "F": "all four recruits, authored placement",
+    "G": "same vocabulary, saturation/bad-placement control"
+  },
+  "conclusion_status": "UNRESOLVED",
+  "human_listening_notes": []
+}
