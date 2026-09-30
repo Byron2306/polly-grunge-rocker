@@ -3,5 +3,8 @@
 .test-build/
 dist/
 fusion_lab/out/
+fusion_lab/instruments/
+fusion_lab/data/production/*.local.json
+fusion_lab/data/production/review-scratch/
 __pycache__/
 *.pyc
