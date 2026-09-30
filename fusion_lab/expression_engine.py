@@ -86,8 +86,16 @@ def assert_frozen_dimensions(host:HostComposition, variant:HostComposition, froz
 
 def standard_technique_handlers()->dict[str,Handler]:
     def sustain(host,request,performer,opp):
-        dur=max(host.ticks_per_beat*2, min(opp.end_tick-opp.start_tick, host.ticks_per_beat*4))
-        return (NoteEvent(opp.start_tick,dur,64,84,3,'SUSTAINED_MELODIC_LINE',request.function_id),)
+        duration=host.ticks_per_beat*2
+        step=host.ticks_per_beat*4
+        pitches=(64,67,69,66)
+        out=[]
+        for i,t in enumerate(range(opp.start_tick,opp.end_tick,step)):
+            dur=min(duration,opp.end_tick-t)
+            if dur <= 0:
+                break
+            out.append(NoteEvent(t,dur,pitches[i%len(pitches)],84,3,'SUSTAINED_MELODIC_LINE',request.function_id))
+        return tuple(out)
     def drone(host,request,performer,opp):
         return (NoteEvent(opp.start_tick,opp.end_tick-opp.start_tick,52,72,3,'DRONE_ANCHOR',request.function_id),)
     def thumb(host,request,performer,opp):
