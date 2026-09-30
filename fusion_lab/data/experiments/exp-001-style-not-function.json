@@ -1,0 +1,30 @@
+{
+  "conclusion_status": "UNRESOLVED",
+  "frozen_dimensions": [
+    "global_clock",
+    "sections",
+    "other_roles",
+    "function",
+    "harmonic_roots",
+    "phrase_bounds",
+    "chord_change_grid"
+  ],
+  "host_id": "host-001-glamasaurus-rex",
+  "human_listening_notes": [],
+  "hypothesis": "A stylistic trademark can change while convergent musical function remains constant.",
+  "id": "exp-001-style-not-function",
+  "mutated_dimensions": [
+    "articulation",
+    "performance_density",
+    "voicing",
+    "register"
+  ],
+  "role": "RHYTHM_GUITAR",
+  "schema": "polly.fusion-lab.experiment.v1",
+  "variants": [
+    "A",
+    "B1",
+    "B2",
+    "C"
+  ]
+}
