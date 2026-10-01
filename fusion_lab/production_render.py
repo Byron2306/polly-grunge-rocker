@@ -16,7 +16,7 @@ def _expand_path(value:str)->Path:
 def load_instrument_profiles(path:Path)->dict[str,InstrumentProfile]:
     raw=json.loads(Path(path).read_text()); out={}
     for layer,row in raw['layers'].items():
-        arts={name:ArticulationMap(name=name,keyswitch=cfg.get('keyswitch'),midi_channel=cfg.get('midi_channel'),velocity_min=cfg.get('velocity_min',1),velocity_max=cfg.get('velocity_max',127)) for name,cfg in row['articulations'].items()}
+        arts={name:ArticulationMap(name=name,keyswitch=cfg.get('keyswitch'),midi_channel=cfg.get('midi_channel'),velocity_min=cfg.get('velocity_min',1),velocity_max=cfg.get('velocity_max',127),sfz_path=_expand_path(cfg['sfz_path']) if cfg.get('sfz_path') else None) for name,cfg in row['articulations'].items()}
         out[layer]=InstrumentProfile(row['id'],row['role'],_expand_path(row['sfz_path']),arts,row['source_id'],row.get('source_version'))
     return out
 
@@ -53,6 +53,8 @@ def check_production_dependencies(config:ProductionConfig, instruments:Mapping[s
     if shutil.which(config.sfizz_executable) is None: raise RuntimeError('PRODUCTION_MISSING_SFIZZ_RENDER')
     for instrument in (instruments or {}).values():
         if not instrument.sfz_path.is_file(): raise RuntimeError(f'PRODUCTION_MISSING_SFZ: {instrument.sfz_path}')
+        for art in instrument.articulations.values():
+            if art.sfz_path is not None and not art.sfz_path.is_file(): raise RuntimeError(f'PRODUCTION_MISSING_ARTICULATION_SFZ: {instrument.id}:{art.name}:{art.sfz_path}')
     for profile in (tone_profiles or {}).values():
         if profile.controls is not None:
             if shutil.which('ffmpeg') is None: raise RuntimeError('PRODUCTION_MISSING_TONE_EXECUTABLE: ffmpeg')
@@ -155,6 +157,6 @@ def _controls_manifest(c:ToneControls|None):
     return {'tuning_profile':c.tuning_profile,'pitch_shift_semitones':c.pitch_shift_semitones,'boost_drive':c.boost_drive,'boost_level':c.boost_level,'amp_gain':c.amp_gain,'distortion':c.distortion,'bass':c.bass,'mid':c.mid,'treble':c.treble,'presence':c.presence,'master':c.master,'reverb_mix':c.reverb_mix,'reverb_decay_s':c.reverb_decay_s,'reverb_predelay_ms':c.reverb_predelay_ms,'cabinet_ir':str(c.cabinet_ir) if c.cabinet_ir else None}
 
 def production_manifest(*,host_id:str,renderer_version:str,instruments:Mapping[str,InstrumentProfile],tone_profiles:Mapping[str,ToneProfile],humanization_seed:int,structural_signature:str,stems:Mapping[str,Path],mix_path:Path|None=None)->dict:
-    data={'schema':'polly.fusion-lab.production-manifest.v2','host_id':host_id,'renderer_version':renderer_version,'humanization_seed':humanization_seed,'structural_signature':structural_signature,'instruments':{k:{'id':v.id,'source_id':v.source_id,'source_version':v.source_version,'sfz_path':str(v.sfz_path)} for k,v in sorted(instruments.items())},'tone_profiles':{k:{'id':v.id,'pan':v.pan,'width':v.width,'controls':_controls_manifest(v.controls),'stages':[s.kind for s in v.stages]} for k,v in sorted(tone_profiles.items())},'stems':{k:{'path':str(v),'sha256':_sha256(Path(v)) if Path(v).is_file() else None} for k,v in sorted(stems.items())}}
+    data={'schema':'polly.fusion-lab.production-manifest.v3','host_id':host_id,'renderer_version':renderer_version,'humanization_seed':humanization_seed,'structural_signature':structural_signature,'instruments':{k:{'id':v.id,'source_id':v.source_id,'source_version':v.source_version,'sfz_path':str(v.sfz_path),'articulations':{name:{'sfz_path':str(a.sfz_path) if a.sfz_path else None,'keyswitch':a.keyswitch} for name,a in sorted(v.articulations.items())}} for k,v in sorted(instruments.items())},'tone_profiles':{k:{'id':v.id,'pan':v.pan,'width':v.width,'controls':_controls_manifest(v.controls),'stages':[s.kind for s in v.stages]} for k,v in sorted(tone_profiles.items())},'stems':{k:{'path':str(v),'sha256':_sha256(Path(v)) if Path(v).is_file() else None} for k,v in sorted(stems.items())}}
     if mix_path is not None: data['mix']={'path':str(mix_path),'sha256':_sha256(Path(mix_path)) if Path(mix_path).is_file() else None}
     payload=json.dumps(data,sort_keys=True,separators=(',',':')); data['manifest_sha256']=hashlib.sha256(payload.encode()).hexdigest(); return data
