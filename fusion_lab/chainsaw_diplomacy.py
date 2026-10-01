@@ -41,7 +41,7 @@ def _riff_for_bar(base:int,variant:int):
     elif variant==1:
         t=base
         for _ in range(3):
-            ev += list(_root5(40,t,TPQ//2,104,'PALM_MUTE_GALLOP')); t += TPQ//2
+            ev += list(_root5(40,t,TPQ//2,106,'PALM_MUTE_DOWNPICK')); t += TPQ//2
             ev += list(_root5(40,t,TPQ//4,98,'PALM_MUTE_GALLOP')); t += TPQ//4
             ev += list(_root5(40,t,TPQ//4,101,'PALM_MUTE_GALLOP')); t += TPQ//4
         ev += list(_root5(41,base+3*TPQ,TPQ//2,110,'CHROMATIC_POWER'))
@@ -49,9 +49,9 @@ def _riff_for_bar(base:int,variant:int):
     elif variant==2:
         for eighth in (0,1,2,3,4):
             ev += list(_root5(40,base+eighth*TPQ//2,TPQ//3,101+(eighth%2)*3,'PALM_MUTE_DOWNPICK'))
-        ev += list(_root5(43,base+5*TPQ//2,TPQ//2,108,'CHROMATIC_POWER'))
+        ev += list(_root5(46,base+5*TPQ//2,TPQ//2,112,'CHROMATIC_POWER'))
         ev += list(_root5(40,base+3*TPQ,TPQ//3,106,'PALM_MUTE_DOWNPICK'))
-        ev += list(_root5(46,base+7*TPQ//2,TPQ//2,114,'OPEN_RELEASE'))
+        ev += list(_root5(46,base+7*TPQ//2,TPQ//2,116,'OPEN_RELEASE'))
     elif variant==3:
         for eighth in range(4):
             ev += list(_root5(40,base+eighth*TPQ//2,TPQ//3,104,'PALM_MUTE_DOWNPICK'))
@@ -62,9 +62,9 @@ def _riff_for_bar(base:int,variant:int):
     else:
         for eighth in range(6):
             ev += list(_root5(40,base+eighth*TPQ//2,TPQ//3,103+(eighth%3)*2,'PALM_MUTE_DOWNPICK'))
-        ev += list(_root5(47,base+3*TPQ,TPQ//4,114,'CHROMATIC_POWER'))
-        ev += list(_root5(46,base+3*TPQ+TPQ//4,TPQ//4,112,'CHROMATIC_POWER'))
-        ev += list(_root5(42,base+3*TPQ+TPQ//2,TPQ//4,110,'CHROMATIC_POWER'))
+        ev += list(_root5(46,base+3*TPQ,TPQ//4,116,'CHROMATIC_POWER'))
+        ev += list(_root5(47,base+3*TPQ+TPQ//4,TPQ//4,112,'CHROMATIC_POWER'))
+        ev += list(_root5(41,base+3*TPQ+TPQ//2,TPQ//4,114,'CHROMATIC_POWER'))
         ev += list(_root5(40,base+3*TPQ+3*TPQ//4,TPQ//4,120,'OPEN_RELEASE'))
     return ev
 
@@ -82,12 +82,20 @@ def _rhythm(sections):
 
 def _bass(sections,rhythm):
     ev=[]; by_tick={}
+    fill_windows=[]
+    for s in sections:
+        end=s.end_bar*BAR_TICKS
+        fill_windows.append((end-2*TPQ,end))
     for e in rhythm: by_tick.setdefault(e.start_tick,[]).append(e)
     for tick,items in sorted(by_tick.items()):
-        root=min(x.note for x in items); ev.append(NoteEvent(tick,items[0].duration_ticks,max(28,root-12),88,1,'PICKED_FOLLOW','GROOVE_ANCHOR'))
-    for s in sections:
-        end=(s.end_bar*BAR_TICKS)-TPQ
-        for i,n in enumerate((40,43,47)): ev.append(NoteEvent(end+i*TPQ//3,TPQ//4,n-12,82+i*4,1,'PHRASE_END_FILL','GROOVE_FILL'))
+        if any(start <= tick < end for start,end in fill_windows):
+            continue
+        root=min(x.note for x in items)
+        ev.append(NoteEvent(tick,items[0].duration_ticks,max(28,root-12),88,1,'PICKED_FOLLOW','GROOVE_ANCHOR'))
+    fill_notes=(28,28,31,34,35,34,31,29,28,34,35,28)
+    for start,_ in fill_windows:
+        for i,note in enumerate(fill_notes):
+            ev.append(NoteEvent(start+i*(TPQ//6),TPQ//8,note,86+(i%4)*3,1,'PHRASE_END_FILL','GROOVE_FILL'))
     return tuple(sorted(ev,key=lambda e:(e.start_tick,e.note)))
 
 def _drums(sections,rhythm):
@@ -111,7 +119,9 @@ def _drums(sections,rhythm):
                 missed=[t for t in sorted(muted_by_bar.get(bar_no,())) if t not in kick_ticks]
                 kick_ticks.update(t for i,t in enumerate(missed) if i%2==0)
                 for t in sorted(kick_ticks):
-                    ev.append(NoteEvent(t,TPQ//8,36,108 if t%TPQ==0 else 102,9,'DOUBLE_KICK_ESCALATION' if kick_step<TPQ else 'THRASH_KICK','PROPULSION'))
+                    is_double=kick_step<TPQ or t%TPQ!=0
+                    articulation='DOUBLE_KICK_ESCALATION' if is_double else 'THRASH_KICK'
+                    ev.append(NoteEvent(t,TPQ//8,36,108 if t%TPQ==0 else 102,9,articulation,'PROPULSION'))
             if b==s.bars-1:
                 for i,n in enumerate((45,47,50,47)): ev.append(NoteEvent(base+3*TPQ+i*TPQ//4,TPQ//8,n,96+i*4,9,'TOM_FILL','TRANSITION'))
     return tuple(sorted(ev,key=lambda e:(e.start_tick,e.note,e.velocity)))
