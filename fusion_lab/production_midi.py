@@ -49,6 +49,28 @@ def _messages(host:HostComposition,track:RoleTrack,instrument:InstrumentProfile)
     for tick,_,msg in events: out.append(msg.copy(time=tick-last)); last=tick
     out.append(mido.MetaMessage('end_of_track',time=0)); return out
 
+def _save_track(host:HostComposition,track:RoleTrack,instrument:InstrumentProfile,path:Path)->Path:
+    mf=mido.MidiFile(type=0,ticks_per_beat=host.ticks_per_beat)
+    tr=mido.MidiTrack(); mf.tracks.append(tr); tr.extend(_messages(host,track,instrument))
+    path.parent.mkdir(parents=True,exist_ok=True); mf.save(path); return path
+
+def write_articulation_midis(host:HostComposition,out_dir:Path,layer:str,profile:HumanizationProfile,instrument:InstrumentProfile)->dict[str,Path]:
+    if layer not in LAYER_ROLE: raise ValueError(f'PRODUCTION_UNKNOWN_LAYER: {layer}')
+    source=host.tracks[LAYER_ROLE[layer]]
+    humanized=humanize_events(host,source.events,profile,layer)
+    grouped={}
+    for e in humanized:
+        art=e.articulation or 'SUSTAIN'
+        if art not in instrument.articulations:
+            raise ValueError(f'PRODUCTION_UNSUPPORTED_ARTICULATION: {instrument.id}:{art}')
+        grouped.setdefault(art,[]).append(e)
+    result={}
+    for art,events in sorted(grouped.items()):
+        track=RoleTrack(source.role,tuple(events),source.program,source.percussion)
+        safe=''.join(ch.lower() if ch.isalnum() else '_' for ch in art).strip('_')
+        result[art]=_save_track(host,track,instrument,Path(out_dir)/f'{layer}__{safe}.mid')
+    return result
+
 def write_production_midis(host:HostComposition,out_dir:Path,humanization_profiles:Mapping[str,HumanizationProfile],instrument_profiles:Mapping[str,InstrumentProfile])->dict[str,Path]:
     out_dir=Path(out_dir); out_dir.mkdir(parents=True,exist_ok=True); result={}
     for layer,role in LAYER_ROLE.items():
@@ -56,6 +78,5 @@ def write_production_midis(host:HostComposition,out_dir:Path,humanization_profil
         if layer not in instrument_profiles: raise ValueError(f'PRODUCTION_MISSING_INSTRUMENT_PROFILE: {layer}')
         source=host.tracks[role]
         track=RoleTrack(source.role,humanize_events(host,source.events,humanization_profiles[layer],layer),source.program,source.percussion)
-        mf=mido.MidiFile(type=0,ticks_per_beat=host.ticks_per_beat); tr=mido.MidiTrack(); mf.tracks.append(tr); tr.extend(_messages(host,track,instrument_profiles[layer]))
-        path=out_dir/f'{layer}.mid'; mf.save(path); result[layer]=path
+        result[layer]=_save_track(host,track,instrument_profiles[layer],out_dir/f'{layer}.mid')
     return result
