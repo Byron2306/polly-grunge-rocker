@@ -1,3 +1,4 @@
+import collections
 import json
 import tempfile
 import unittest
@@ -45,9 +46,11 @@ class MusicDNAProfileTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 load_genre_profile(path)
 
-    def test_corpus_retains_provenance_without_notation_payloads(self):
+    def test_corpus_has_five_exemplars_per_genre_without_notation_payloads(self):
         observations = load_corpus(DATA_ROOT / 'corpus.json')
-        self.assertGreaterEqual(len(observations), 7)
+        self.assertEqual(len(observations), 35)
+        counts = collections.Counter(obs.genre for obs in observations)
+        self.assertEqual(set(counts.values()), {5})
         for obs in observations:
             self.assertTrue(obs.provenance)
             self.assertNotIn('tab', obs.features)
