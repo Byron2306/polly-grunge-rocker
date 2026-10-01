@@ -30,6 +30,18 @@ class ChainsawMusicDNATests(unittest.TestCase):
         self.assertIn('coupling', payload)
         self.assertIn('hook_score', payload)
 
+    def test_chainsaw_enters_preferred_classic_thrash_envelope(self):
+        profile = load_seed_genre_profiles(DATA_ROOT)['THRASH_CLASSIC']
+        report = analyze_host(build_chainsaw_diplomacy(), profile)
+        values = report.feature_vector
+        self.assertEqual(report.decision.state.value, 'ALLOW', report.decision.reasons)
+        self.assertGreaterEqual(values['guitar.downpick_ratio'], 0.55)
+        self.assertGreaterEqual(values['harmony.chromaticity'], 0.30)
+        self.assertGreaterEqual(values['harmony.tritone_rate'], 0.08)
+        self.assertGreaterEqual(values['drums.double_kick_density'], 0.12)
+        self.assertGreaterEqual(values['bass.fill_probability'], 0.08)
+        self.assertLessEqual(report.coupling['bass_guitar_lock_rate'], 0.90)
+
 
 if __name__ == '__main__':
     unittest.main()
