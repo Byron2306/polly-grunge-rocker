@@ -5,6 +5,13 @@ from typing import Mapping
 from .model import DecisionState, GenreDNA, GenreDecision, RangeBand
 
 
+_COUPLING_ALIASES = {
+    'coupling.guitar_kick_coupling': 'drums.guitar_kick_coupling',
+    'coupling.bass_guitar_lock_rate': 'bass.guitar_lock_rate',
+    'coupling.bass_kick_lock_rate': 'bass.kick_lock_rate',
+}
+
+
 def _flatten_profile(profile: GenreDNA) -> dict[str, RangeBand]:
     result: dict[str, RangeBand] = {'tempo_bpm': profile.tempo}
     for prefix, component in (
@@ -19,6 +26,9 @@ def _flatten_profile(profile: GenreDNA) -> dict[str, RangeBand]:
     ):
         for name, band in component.features.items():
             result[f'{prefix}.{name}'] = band
+    for alias, target in _COUPLING_ALIASES.items():
+        if target in result:
+            result[alias] = result[target]
     return result
 
 
