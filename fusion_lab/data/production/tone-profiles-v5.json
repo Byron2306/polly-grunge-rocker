@@ -1,0 +1,29 @@
+{
+  "schema":"polly.fusion-lab.tone-profiles.v2",
+  "profile_family":"THRASH_1988_V5_REAL_AMP",
+  "layers":{
+    "rhythm_guitar_L":{
+      "id":"THRASH_1988_V5_GTR_L","pan":-0.92,"width":1.0,
+      "controls":{"tuning_profile":"E_STANDARD","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":0.0,"amp_gain":0.0,"distortion":0.0,"bass":5.0,"mid":5.0,"treble":5.0,"presence":5.0,"master":5.0,"reverb_mix":0.0,"reverb_decay_s":0.0,"reverb_predelay_ms":0},
+      "stages":[{"kind":"real_amp_sim","executable":"python3","args":["scripts/run_real_amp_stage.py","--input","{in}","--output","{out}","--cab","{asset}"],"asset_path":"${FUSION_THRASH_CAB_IR}"}]
+    },
+    "rhythm_guitar_R":{
+      "id":"THRASH_1988_V5_GTR_R","pan":0.92,"width":1.0,
+      "controls":{"tuning_profile":"E_STANDARD","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":0.0,"amp_gain":0.0,"distortion":0.0,"bass":5.0,"mid":5.0,"treble":5.0,"presence":5.0,"master":5.0,"reverb_mix":0.0,"reverb_decay_s":0.0,"reverb_predelay_ms":0},
+      "stages":[{"kind":"real_amp_sim","executable":"python3","args":["scripts/run_real_amp_stage.py","--input","{in}","--output","{out}","--cab","{asset}"],"asset_path":"${FUSION_THRASH_CAB_IR}"}]
+    },
+    "bass":{
+      "id":"THRASH_1988_V5_BASS","pan":0.0,"width":1.0,
+      "controls":{"tuning_profile":"E_STANDARD","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":1.0,"amp_gain":3.8,"distortion":2.4,"bass":6.2,"mid":5.8,"treble":4.0,"presence":3.5,"master":4.5,"reverb_mix":0.0,"reverb_decay_s":0.0,"reverb_predelay_ms":0},"stages":[]
+    },
+    "drums":{
+      "id":"THRASH_1988_V5_DRUMS","pan":0.0,"width":1.0,
+      "controls":{"tuning_profile":"NATIVE","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":0.0,"amp_gain":0.0,"distortion":0.0,"bass":5.2,"mid":4.8,"treble":5.7,"presence":5.4,"master":4.0,"reverb_mix":0.045,"reverb_decay_s":0.45,"reverb_predelay_ms":8},"stages":[]
+    },
+    "lead_guitar":{
+      "id":"THRASH_1988_V5_LEAD","pan":0.08,"width":1.0,
+      "controls":{"tuning_profile":"E_STANDARD","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":0.0,"amp_gain":0.0,"distortion":0.0,"bass":5.0,"mid":5.0,"treble":5.0,"presence":5.0,"master":5.0,"reverb_mix":0.0,"reverb_decay_s":0.0,"reverb_predelay_ms":0},
+      "stages":[{"kind":"real_amp_sim","executable":"python3","args":["scripts/run_real_amp_stage.py","--input","{in}","--output","{out}","--cab","{asset}"],"asset_path":"${FUSION_THRASH_CAB_IR}"}]
+    }
+  }
+}
