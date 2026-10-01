@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from fusion_lab.production_render import mix_production_stems
+from fusion_lab.mix_truth import mix_with_levels
 
 
 class MixTruthTests(unittest.TestCase):
@@ -22,8 +22,8 @@ class MixTruthTests(unittest.TestCase):
                 "drums": 0.78,
                 "lead_guitar": 0.42,
             }
-            with patch("fusion_lab.production_render.shutil.which", return_value="/usr/bin/ffmpeg"), patch("fusion_lab.production_render.subprocess.run") as run:
-                mix_production_stems(stems, root / "mix.wav", levels=levels)
+            with patch("fusion_lab.mix_truth.shutil.which", return_value="/usr/bin/ffmpeg"), patch("fusion_lab.mix_truth.subprocess.run") as run:
+                mix_with_levels(stems, root / "mix.wav", levels=levels)
                 cmd = run.call_args.args[0]
                 graph = cmd[cmd.index("-filter_complex") + 1]
                 self.assertIn("volume=1.000000", graph)
@@ -37,7 +37,7 @@ class MixTruthTests(unittest.TestCase):
             p = root / "g.wav"
             p.write_bytes(b"x")
             with self.assertRaisesRegex(RuntimeError, "PRODUCTION_MISSING_MIX_LEVEL"):
-                mix_production_stems({"g": p}, root / "mix.wav", levels={})
+                mix_with_levels({"g": p}, root / "mix.wav", levels={})
 
 
 if __name__ == "__main__":
