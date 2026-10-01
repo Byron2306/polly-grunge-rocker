@@ -34,27 +34,50 @@ def _root5(root:int,start:int,dur:int,velocity:int=104,articulation:str='OPEN_RE
 
 def _riff_for_bar(base:int,variant:int):
     ev=[]
-    if variant%3==0:
-        for i in range(6): ev += list(_root5(40,base+i*TPQ//2,TPQ//3,100,'PALM_MUTE_DOWNPICK'))
-        ev += list(_root5(46,base+3*TPQ,TPQ,110,'OPEN_RELEASE'))
-    elif variant%3==1:
+    if variant==0:
+        for i in range(6): ev += list(_root5(40,base+i*TPQ//2,TPQ//3,102,'PALM_MUTE_DOWNPICK'))
+        ev += list(_root5(46,base+3*TPQ,TPQ//2,112,'CHROMATIC_POWER'))
+        ev += list(_root5(47,base+3*TPQ+TPQ//2,TPQ//2,114,'OPEN_RELEASE'))
+    elif variant==1:
         t=base
         for _ in range(3):
-            ev += list(_root5(40,t,TPQ//2,103,'PALM_MUTE_GALLOP')); t += TPQ//2
-            ev += list(_root5(40,t,TPQ//4,96,'PALM_MUTE_GALLOP')); t += TPQ//4
+            ev += list(_root5(40,t,TPQ//2,104,'PALM_MUTE_GALLOP')); t += TPQ//2
             ev += list(_root5(40,t,TPQ//4,98,'PALM_MUTE_GALLOP')); t += TPQ//4
-        ev += list(_root5(41,base+3*TPQ,TPQ//2,108,'CHROMATIC_POWER'))
-        ev += list(_root5(42,base+3*TPQ+TPQ//2,TPQ//2,108,'CHROMATIC_POWER'))
+            ev += list(_root5(40,t,TPQ//4,101,'PALM_MUTE_GALLOP')); t += TPQ//4
+        ev += list(_root5(41,base+3*TPQ,TPQ//2,110,'CHROMATIC_POWER'))
+        ev += list(_root5(42,base+3*TPQ+TPQ//2,TPQ//2,112,'CHROMATIC_POWER'))
+    elif variant==2:
+        for eighth in (0,1,2,3,4):
+            ev += list(_root5(40,base+eighth*TPQ//2,TPQ//3,101+(eighth%2)*3,'PALM_MUTE_DOWNPICK'))
+        ev += list(_root5(43,base+5*TPQ//2,TPQ//2,108,'CHROMATIC_POWER'))
+        ev += list(_root5(40,base+3*TPQ,TPQ//3,106,'PALM_MUTE_DOWNPICK'))
+        ev += list(_root5(46,base+7*TPQ//2,TPQ//2,114,'OPEN_RELEASE'))
+    elif variant==3:
+        for eighth in range(4):
+            ev += list(_root5(40,base+eighth*TPQ//2,TPQ//3,104,'PALM_MUTE_DOWNPICK'))
+        ev += list(_root5(43,base+2*TPQ,TPQ//2,110,'CHROMATIC_POWER'))
+        ev += list(_root5(42,base+2*TPQ+TPQ//2,TPQ//2,112,'CHROMATIC_POWER'))
+        ev += list(_root5(41,base+3*TPQ,TPQ//2,114,'CHROMATIC_POWER'))
+        ev += list(_root5(40,base+3*TPQ+TPQ//2,TPQ//2,118,'OPEN_RELEASE'))
     else:
-        for beat,root in enumerate((40,43,46,47)):
-            art='PALM_MUTE_DOWNPICK' if root==40 else 'OPEN_RELEASE'
-            ev += list(_root5(root,base+beat*TPQ,TPQ//2 if root==40 else TPQ,105,art))
+        for eighth in range(6):
+            ev += list(_root5(40,base+eighth*TPQ//2,TPQ//3,103+(eighth%3)*2,'PALM_MUTE_DOWNPICK'))
+        ev += list(_root5(47,base+3*TPQ,TPQ//4,114,'CHROMATIC_POWER'))
+        ev += list(_root5(46,base+3*TPQ+TPQ//4,TPQ//4,112,'CHROMATIC_POWER'))
+        ev += list(_root5(42,base+3*TPQ+TPQ//2,TPQ//4,110,'CHROMATIC_POWER'))
+        ev += list(_root5(40,base+3*TPQ+3*TPQ//4,TPQ//4,120,'OPEN_RELEASE'))
     return ev
 
 def _rhythm(sections):
     ev=[]
     for s in sections:
-        for i in range(s.bars): ev.extend(_riff_for_bar((s.start_bar+i)*BAR_TICKS,(s.start_bar+i)%3))
+        for i in range(s.bars):
+            phrase_pos=i%4; phrase_index=i//4
+            if phrase_pos==0: variant=0
+            elif phrase_pos==1: variant=1
+            elif phrase_pos==2: variant=2 if phrase_index%2 else 0
+            else: variant=3 if phrase_index%2==0 else 4
+            ev.extend(_riff_for_bar((s.start_bar+i)*BAR_TICKS,variant))
     return tuple(sorted(ev,key=lambda e:(e.start_tick,e.note,e.duration_ticks)))
 
 def _bass(sections,rhythm):
@@ -67,11 +90,15 @@ def _bass(sections,rhythm):
         for i,n in enumerate((40,43,47)): ev.append(NoteEvent(end+i*TPQ//3,TPQ//4,n-12,82+i*4,1,'PHRASE_END_FILL','GROOVE_FILL'))
     return tuple(sorted(ev,key=lambda e:(e.start_tick,e.note)))
 
-def _drums(sections):
+def _drums(sections,rhythm):
     ev=[]
+    muted_by_bar={}
+    for e in rhythm:
+        if e.articulation in {'PALM_MUTE_DOWNPICK','PALM_MUTE_GALLOP'}:
+            muted_by_bar.setdefault(e.start_tick//BAR_TICKS,set()).add(e.start_tick)
     for s in sections:
         for b in range(s.bars):
-            base=(s.start_bar+b)*BAR_TICKS; bridge=s.id=='bridge'; chorus='chorus' in s.id
+            bar_no=s.start_bar+b; base=bar_no*BAR_TICKS; bridge=s.id=='bridge'; chorus='chorus' in s.id
             if bridge:
                 for beat in (0,2): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,36,112,9,'THRASH_HALF_TIME','PROPULSION'))
                 ev.append(NoteEvent(base+2*TPQ,TPQ//8,38,118,9,'THRASH_HALF_TIME','BACKBEAT'))
@@ -80,7 +107,11 @@ def _drums(sections):
                 for eighth in range(8): ev.append(NoteEvent(base+eighth*TPQ//2,TPQ//8,42 if not chorus else 51,74+(eighth%3)*3,9,'THRASH_SKANK','TIME'))
                 for beat in (1,3): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,38,116,9,'CHORUS_BACKBEAT' if chorus else 'THRASH_SKANK','BACKBEAT'))
                 kick_step=TPQ//2 if s.id in {'pre','solo'} else TPQ
-                for t in range(base,base+BAR_TICKS,kick_step): ev.append(NoteEvent(t,TPQ//8,36,108,9,'DOUBLE_KICK_ESCALATION' if kick_step<TPQ else 'THRASH_KICK','PROPULSION'))
+                kick_ticks=set(range(base,base+BAR_TICKS,kick_step))
+                missed=[t for t in sorted(muted_by_bar.get(bar_no,())) if t not in kick_ticks]
+                kick_ticks.update(t for i,t in enumerate(missed) if i%2==0)
+                for t in sorted(kick_ticks):
+                    ev.append(NoteEvent(t,TPQ//8,36,108 if t%TPQ==0 else 102,9,'DOUBLE_KICK_ESCALATION' if kick_step<TPQ else 'THRASH_KICK','PROPULSION'))
             if b==s.bars-1:
                 for i,n in enumerate((45,47,50,47)): ev.append(NoteEvent(base+3*TPQ+i*TPQ//4,TPQ//8,n,96+i*4,9,'TOM_FILL','TRANSITION'))
     return tuple(sorted(ev,key=lambda e:(e.start_tick,e.note,e.velocity)))
@@ -97,7 +128,7 @@ def _lead(sections):
 
 def build_chainsaw_diplomacy()->HostComposition:
     sections=_sections(); rhythm=_rhythm(sections)
-    tracks={'DRUMS':RoleTrack('DRUMS',_drums(sections),None,True),'BASS':RoleTrack('BASS',_bass(sections,rhythm),33,False),'RHYTHM_GUITAR':RoleTrack('RHYTHM_GUITAR',rhythm,30,False),'LEAD_KEYS':RoleTrack('LEAD_KEYS',_lead(sections),29,False),'VOCALS':RoleTrack('VOCALS',(),54,False)}
+    tracks={'DRUMS':RoleTrack('DRUMS',_drums(sections,rhythm),None,True),'BASS':RoleTrack('BASS',_bass(sections,rhythm),33,False),'RHYTHM_GUITAR':RoleTrack('RHYTHM_GUITAR',rhythm,30,False),'LEAD_KEYS':RoleTrack('LEAD_KEYS',_lead(sections),29,False),'VOCALS':RoleTrack('VOCALS',(),54,False)}
     return HostComposition('host-003-chainsaw-diplomacy',192,4,4,TPQ,'E',sections,tracks)
 
 def chainsaw_articulation_map(host:HostComposition)->Mapping[str,tuple[ArticulationEvent,...]]:
