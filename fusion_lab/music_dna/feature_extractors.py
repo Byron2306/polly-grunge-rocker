@@ -23,8 +23,8 @@ def _attack_density(events: tuple[NoteEvent, ...], song_ticks: int, tpq: int) ->
     if not events:
         return 0.0
     beats = max(1.0, song_ticks / tpq)
-    eighth_note_slots = beats * 2.0
-    return min(1.0, len({e.start_tick for e in events}) / eighth_note_slots)
+    sixteenth_note_slots = beats * 4.0
+    return min(1.0, len({e.start_tick for e in events}) / sixteenth_note_slots)
 
 
 def _ratio(events: tuple[NoteEvent, ...], predicate) -> float:
