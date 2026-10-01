@@ -1,9 +1,41 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Mapping, Sequence
+from dataclasses import dataclass
+from typing import Iterator, Mapping, Sequence
 
 from fusion_lab.model import NoteEvent
+
+
+@dataclass(frozen=True, slots=True)
+class HookScore(Mapping[str, float]):
+    recurrence: float
+    rhythmic_identity: float
+    contour_recurrence: float
+    rest_recurrence: float
+    phrase_end_mutation: float
+    loop_penalty: float
+    total: float
+
+    def to_dict(self) -> dict[str, float]:
+        return {
+            'recurrence': self.recurrence,
+            'rhythmic_identity': self.rhythmic_identity,
+            'contour_recurrence': self.contour_recurrence,
+            'rest_recurrence': self.rest_recurrence,
+            'phrase_end_mutation': self.phrase_end_mutation,
+            'loop_penalty': self.loop_penalty,
+            'total': self.total,
+        }
+
+    def __getitem__(self, key: str) -> float:
+        return self.to_dict()[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.to_dict())
+
+    def __len__(self) -> int:
+        return 7
 
 
 def _bar_signature(events: Sequence[NoteEvent], bar_start: int, bar_ticks: int) -> tuple[tuple[int, int, int], ...]:
@@ -14,20 +46,45 @@ def _bar_signature(events: Sequence[NoteEvent], bar_start: int, bar_ticks: int) 
     return tuple(sorted(rows))
 
 
-def score_hook(events: Sequence[NoteEvent], ticks_per_beat: int) -> Mapping[str, float]:
+def _mode_recurrence(values: Sequence[tuple]) -> float:
+    if not values:
+        return 0.0
+    return max(Counter(values).values()) / len(values)
+
+
+def _contour(signature: tuple[tuple[int, int, int], ...]) -> tuple[int, ...]:
+    notes = [row[1] for row in signature]
+    return tuple(0 if b == a else (1 if b > a else -1) for a, b in zip(notes, notes[1:]))
+
+
+def _rest_pattern(signature: tuple[tuple[int, int, int], ...], bar_ticks: int) -> tuple[int, ...]:
+    if not signature:
+        return (bar_ticks,)
+    intervals = []
+    cursor = 0
+    for onset, _, duration in signature:
+        if onset > cursor:
+            intervals.append(onset - cursor)
+        cursor = max(cursor, onset + duration)
+    if cursor < bar_ticks:
+        intervals.append(bar_ticks - cursor)
+    return tuple(intervals)
+
+
+def score_hook(
+    events: Sequence[NoteEvent],
+    ticks_per_beat: int,
+    beats_per_bar: int = 4,
+) -> HookScore:
     if ticks_per_beat <= 0:
         raise ValueError('ticks_per_beat must be > 0')
+    if beats_per_bar <= 0:
+        raise ValueError('beats_per_bar must be > 0')
     if not events:
-        return {
-            'recurrence': 0.0,
-            'rhythmic_identity': 0.0,
-            'phrase_end_mutation': 0.0,
-            'loop_penalty': 0.0,
-            'total': 0.0,
-        }
+        return HookScore(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
     ordered = tuple(sorted(events, key=lambda e: (e.start_tick, e.note, e.duration_ticks)))
-    bar_ticks = ticks_per_beat * 4
+    bar_ticks = ticks_per_beat * beats_per_bar
     last_tick = max(e.start_tick for e in ordered)
     bars = max(1, last_tick // bar_ticks + 1)
     signatures = tuple(_bar_signature(ordered, i * bar_ticks, bar_ticks) for i in range(bars))
@@ -36,21 +93,20 @@ def score_hook(events: Sequence[NoteEvent], ticks_per_beat: int) -> Mapping[str,
     max_repeat = max(counts.values()) if counts else 0
     recurrence = 0.0 if not nonempty else min(1.0, max_repeat / max(2, len(nonempty) / 2))
 
-    onset_patterns = []
-    for sig in nonempty:
-        onset_patterns.append(tuple(row[0] for row in sig))
-    rhythmic_identity = 0.0
-    if onset_patterns:
-        rhythmic_identity = max(Counter(onset_patterns).values()) / len(onset_patterns)
+    onset_patterns = tuple(tuple(row[0] for row in sig) for sig in nonempty)
+    rhythmic_identity = _mode_recurrence(onset_patterns)
+    contour_recurrence = _mode_recurrence(tuple(_contour(sig) for sig in nonempty))
+    rest_recurrence = _mode_recurrence(tuple(_rest_pattern(sig, bar_ticks) for sig in nonempty))
 
     phrase_end_mutation = 0.0
     if len(nonempty) >= 4:
-        base = nonempty[0]
-        end = nonempty[-1]
-        if base != end:
-            shared_onsets = {x[0] for x in base} & {x[0] for x in end}
-            if shared_onsets:
-                phrase_end_mutation = min(1.0, len(shared_onsets) / max(1, len({x[0] for x in base})))
+        reference = nonempty[0]
+        ending = nonempty[-1]
+        if reference != ending:
+            shared_onsets = {x[0] for x in reference} & {x[0] for x in ending}
+            onset_identity = len(shared_onsets) / max(1, len({x[0] for x in reference}))
+            contour_changed = _contour(reference) != _contour(ending)
+            phrase_end_mutation = min(1.0, onset_identity * (1.0 if contour_changed else 0.6))
 
     loop_penalty = 0.0
     if len(nonempty) >= 8 and len(counts) <= 2:
@@ -60,16 +116,20 @@ def score_hook(events: Sequence[NoteEvent], ticks_per_beat: int) -> Mapping[str,
         0.0,
         min(
             1.0,
-            0.45 * recurrence
-            + 0.25 * rhythmic_identity
+            0.30 * recurrence
+            + 0.18 * rhythmic_identity
+            + 0.12 * contour_recurrence
+            + 0.10 * rest_recurrence
             + 0.30 * phrase_end_mutation
             - 0.60 * loop_penalty,
         ),
     )
-    return {
-        'recurrence': recurrence,
-        'rhythmic_identity': rhythmic_identity,
-        'phrase_end_mutation': phrase_end_mutation,
-        'loop_penalty': loop_penalty,
-        'total': total,
-    }
+    return HookScore(
+        recurrence,
+        rhythmic_identity,
+        contour_recurrence,
+        rest_recurrence,
+        phrase_end_mutation,
+        loop_penalty,
+        total,
+    )
