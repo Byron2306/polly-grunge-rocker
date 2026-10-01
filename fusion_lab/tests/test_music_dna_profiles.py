@@ -39,6 +39,10 @@ class MusicDNAProfileTests(unittest.TestCase):
         self.assertLess(black.guitar.features['palm_mute_ratio'].preferred_maximum, thrash.guitar.features['palm_mute_ratio'].preferred_minimum)
         self.assertLess(doom.guitar.features['attack_density'].preferred_maximum, thrash.guitar.features['attack_density'].preferred_minimum)
 
+    def test_thrashy_staccato_can_be_valid_without_sustain(self):
+        thrash = load_seed_genre_profiles(DATA_ROOT / 'genres')['THRASH_CLASSIC']
+        self.assertEqual(thrash.guitar.features['sustain_ratio'].minimum, 0.0)
+
     def test_malformed_profile_fails_loudly(self):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / 'bad.json'
