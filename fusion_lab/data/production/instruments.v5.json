@@ -1,0 +1,45 @@
+{
+  "schema":"polly.fusion-lab.instrument-profiles.v2",
+  "layers":{
+    "rhythm_guitar_L":{
+      "id":"metal-gtx-full-v5","role":"RHYTHM_GUITAR",
+      "sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Sus_Down.sfz",
+      "source_id":"Metal-GTX","source_version":"installed-proot",
+      "articulations":{
+        "PALM_MUTE_DOWNPICK":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Mute_Down.sfz"},
+        "PALM_MUTE_GALLOP":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Mute_Down.sfz"},
+        "OPEN_RELEASE":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Sus_Down.sfz"},
+        "CHROMATIC_POWER":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Sus_Down.sfz"}
+      }
+    },
+    "rhythm_guitar_R":{
+      "id":"metal-gtx-xtracking-v5","role":"RHYTHM_GUITAR",
+      "sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_XTracking/Sus_Down.sfz",
+      "source_id":"Metal-GTX-XTracking","source_version":"installed-proot",
+      "articulations":{
+        "PALM_MUTE_DOWNPICK":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_XTracking/Mute_Down.sfz"},
+        "PALM_MUTE_GALLOP":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_XTracking/Mute_Down.sfz"},
+        "OPEN_RELEASE":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_XTracking/Sus_Down.sfz"},
+        "CHROMATIC_POWER":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_XTracking/Sus_Down.sfz"}
+      }
+    },
+    "bass":{
+      "id":"growlybass-angry","role":"BASS",
+      "sfz_path":"${FUSION_INSTRUMENT_ROOT}/bass/Growlybass/Growlybass/growlybass_angry.sfz",
+      "source_id":"Karoryfer-Growlybass","source_version":"1.002",
+      "articulations":{"PICKED_FOLLOW":{},"PHRASE_END_FILL":{}}
+    },
+    "drums":{
+      "id":"salamander-original","role":"DRUMS",
+      "sfz_path":"${FUSION_INSTRUMENT_ROOT}/drums/Salamander/Salamander Drumkit.sfz",
+      "source_id":"Salamander-Drumkit","source_version":"original",
+      "articulations":{"THRASH_SKANK":{},"THRASH_KICK":{},"CHORUS_BACKBEAT":{},"DOUBLE_KICK_ESCALATION":{},"THRASH_HALF_TIME":{},"RIDE":{},"TOM_FILL":{}}
+    },
+    "lead_guitar":{
+      "id":"metal-gtx-lead-v5","role":"LEAD_KEYS",
+      "sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Sus_Down.sfz",
+      "source_id":"Metal-GTX","source_version":"installed-proot",
+      "articulations":{"LEAD_SUSTAIN":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Sus_Down.sfz"},"LEAD_VIBRATO":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Sus_Down.sfz"},"LEAD_FAST_RUN":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Sus_Down.sfz"},"LEAD_PEAK":{"sfz_path":"${FUSION_METAL_GTX_CLEAN_ROOT}/METAL-GTX_Full/Sus_Down.sfz"}}
+    }
+  }
+}
