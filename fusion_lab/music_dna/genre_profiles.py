@@ -5,6 +5,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping, Type
 
+from .distributions import CategoricalDistribution
 from .model import (
     ArrangementDNA,
     BassDNA,
@@ -58,10 +59,11 @@ def load_genre_profile(path: Path) -> GenreDNA:
         raise ValueError(f'missing required profile components: {missing}')
     if raw.get('schema') != 'polly.music-dna.genre-profile.v1':
         raise ValueError('invalid genre profile schema')
+    meters = CategoricalDistribution({str(k): float(v) for k, v in raw['meters'].items()}).normalized()
     return GenreDNA(
         id=str(raw['id']),
         tempo=_band(raw['tempo']),
-        meters=MappingProxyType(dict(sorted((str(k), float(v)) for k, v in raw['meters'].items()))),
+        meters=meters,
         **{name: _component(name, raw[name]) for name in _COMPONENTS},
     )
 
