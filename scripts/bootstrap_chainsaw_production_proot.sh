@@ -93,9 +93,23 @@ fi
 MG_SFZ="$(find "$MG_DIR" -type f -iname '*.sfz' -print -quit)"
 [[ -n "$MG_SFZ" && -f "$MG_SFZ" ]] || fail "Metal GTX SFZ missing after extraction"
 
+say "Preparing Metal GTX sfizz compatibility patches"
+MG_INDIVIDUAL="$MG_DIR/UI_METAL-GTX/Programs/Individual Patchs"
+[[ -d "$MG_INDIVIDUAL" ]] || fail "Metal GTX individual patch directory missing"
+if [[ ! -e "$MG_INDIVIDUAL/Samples" ]]; then
+  ln -s ../../Samples "$MG_INDIVIDUAL/Samples"
+fi
+PYTHONPATH="$REPO_ROOT" python3 -m fusion_lab.metal_gtx_compat \
+  --individual-root "$MG_INDIVIDUAL"
+MG_CLEAN="$MG_INDIVIDUAL/SFIZZ_CLEAN"
+[[ -L "$MG_CLEAN/Samples" ]] || fail "Metal GTX compatibility sample link missing"
+[[ -f "$MG_CLEAN/METAL-GTX_Full/Mute_Down.sfz" ]] || fail "Metal GTX clean mute patch missing"
+[[ -f "$MG_CLEAN/METAL-GTX_XTracking/Sus_Up.sfz" ]] || fail "Metal GTX clean xtracking patch missing"
+
 say "Writing persistent environment helper"
 cat > "$HOME/.fusion-production-env" <<EOF
 export FUSION_INSTRUMENT_ROOT="$ASSET_ROOT"
+export FUSION_METAL_GTX_CLEAN_ROOT="$MG_CLEAN"
 export PATH="$HOME/.local/bin:\$PATH"
 EOF
 
@@ -104,12 +118,11 @@ printf 'sfizz_render: %s\n' "$(command -v sfizz_render)"
 printf 'Growlybass:   %s\n' "$GB_SFZ"
 printf 'Salamander:  %s\n' "$SD_SFZ"
 printf 'Metal GTX:   %s\n' "$MG_SFZ"
+printf 'Metal clean: %s\n' "$MG_CLEAN"
 printf 'Asset root:  %s\n' "$ASSET_ROOT"
-printf '\nMetal GTX SFZ files:\n'
-find "$MG_DIR" -type f -iname '*.sfz' -print | head -20
-printf '\nMetal GTX keyswitch/opcode hints:\n'
-grep -RInE 'sw_(lokey|hikey|default|last|down|up)|keyswitch' "$MG_DIR" --include='*.sfz' 2>/dev/null | head -80 || true
+printf '\nMetal GTX clean SFZ files:\n'
+find "$MG_CLEAN" -type f -iname '*.sfz' -print | head -20
 
 printf '\nBOOTSTRAP PASS\n'
 printf 'Next shell command: source %s\n' "$HOME/.fusion-production-env"
-printf 'NOTE: cabinet IR and final Metal GTX articulation mapping remain authenticity-controlled setup steps.\n'
+printf 'NOTE: cabinet IR and final amp model remain authenticity-controlled setup steps.\n'
