@@ -19,7 +19,7 @@ class HookScoreTests(unittest.TestCase):
         pattern = ((0, 40, 180), (240, 40, 180), (480, 43, 180), (720, 40, 180))
         repeated = motif(pattern, 4)
         randomish = tuple(
-            NoteEvent(i * 240, 180, 40 + ((i * 5 + i // 2) % 11), 100, 2, 'OPEN_RELEASE', 'RHYTHM_SUPPORT')
+            NoteEvent(i * 240, 180, 40 + ((i * i + 3 * i + i // 3) % 11), 100, 2, 'OPEN_RELEASE', 'RHYTHM_SUPPORT')
             for i in range(16)
         )
         self.assertGreater(score_hook(repeated, 480)['total'], score_hook(randomish, 480)['total'])
