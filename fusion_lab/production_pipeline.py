@@ -6,6 +6,7 @@ from .midi_io import host_structural_signature
 from .production_model import HumanizationProfile, ProductionConfig
 from .production_midi import write_production_midis, write_articulation_midis
 from .production_render import load_instrument_profiles, load_tone_profiles, check_production_dependencies, render_sfz, apply_tone_chain, mix_production_stems, production_manifest
+from .mix_truth import mix_with_levels, THRASH_1988_MIX_LEVELS
 
 def default_humanization(seed:int)->dict[str,HumanizationProfile]:
     return {'rhythm_guitar_L':HumanizationProfile(seed,2,4,7,8),'rhythm_guitar_R':HumanizationProfile(seed,2,4,9,9),'bass':HumanizationProfile(seed+11,4,6,0,0),'drums':HumanizationProfile(seed+23,6,8,0,0),'lead_guitar':HumanizationProfile(seed+37,7,7,0,0)}
@@ -41,9 +42,11 @@ def render_chainsaw_production(*,out_dir:Path,instrument_config:Path,tone_config
         else:
             render_sfz(regular_midis[layer],instrument.sfz_path,clean,sample_rate=sample_rate,executable=sfizz_executable)
         apply_tone_chain(clean,final,tones[layer]); processed[layer]=final
-    mix_path=out_dir/'CHAINSAW_DIPLOMACY_INSTRUMENTAL.wav'; mix_production_stems(processed,mix_path)
+    mix_path=out_dir/'CHAINSAW_DIPLOMACY_INSTRUMENTAL.wav'
+    mix_with_levels(processed,mix_path,levels=THRASH_1988_MIX_LEVELS)
     manifest=production_manifest(host_id=host.id,renderer_version='sfizz-1.2.3-articulation-routing',instruments=instruments,tone_profiles=tones,humanization_seed=seed,structural_signature=host_structural_signature(host),stems=processed,mix_path=mix_path)
     manifest['bpm']=host.bpm; manifest['meter']=[host.numerator,host.denominator]; manifest['bars']=sum(s.bars for s in host.sections)
+    manifest['mix_levels']=dict(THRASH_1988_MIX_LEVELS)
     manifest['articulation_renders']=articulation_renders
     manifest['vocal_windows']=[{'id':w.id,'section_id':w.section_id,'start_tick':w.start_tick,'end_tick':w.end_tick,'kind':w.kind} for w in chainsaw_vocal_windows(host)]
     manifest['authenticity_review']={'state':'PENDING','rubric':dict(chainsaw_review_rubric()),'notes':[]}
