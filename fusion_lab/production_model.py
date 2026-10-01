@@ -45,6 +45,33 @@ class HumanizationProfile:
         if self.velocity_delta > 32 or self.double_track_velocity_delta > 40: raise ValueError('velocity humanization exceeds production bound')
 
 @dataclass(frozen=True, slots=True)
+class ToneControls:
+    tuning_profile:str='E_STANDARD'
+    pitch_shift_semitones:int=0
+    boost_drive:float=0.0
+    boost_level:float=0.0
+    amp_gain:float=5.0
+    distortion:float=0.0
+    bass:float=5.0
+    mid:float=5.0
+    treble:float=5.0
+    presence:float=5.0
+    master:float=5.0
+    reverb_mix:float=0.0
+    reverb_decay_s:float=0.0
+    reverb_predelay_ms:int=0
+    cabinet_ir:Path|None=None
+    def __post_init__(self):
+        if not self.tuning_profile: raise ValueError('tuning_profile required')
+        if not -24 <= self.pitch_shift_semitones <= 24: raise ValueError('pitch_shift_semitones must be -24..24')
+        for name in ('boost_drive','boost_level','amp_gain','distortion','bass','mid','treble','presence','master'):
+            value=float(getattr(self,name))
+            if not 0.0 <= value <= 10.0: raise ValueError(f'{name} must be 0..10')
+        if not 0.0 <= self.reverb_mix <= 1.0: raise ValueError('reverb_mix must be 0..1')
+        if not 0.0 <= self.reverb_decay_s <= 20.0: raise ValueError('reverb_decay_s must be 0..20')
+        if not 0 <= self.reverb_predelay_ms <= 500: raise ValueError('reverb_predelay_ms must be 0..500')
+
+@dataclass(frozen=True, slots=True)
 class ToneStage:
     kind:str
     executable:str|None=None
@@ -60,6 +87,7 @@ class ToneProfile:
     stages:tuple[ToneStage,...]
     pan:float=0.0
     width:float=1.0
+    controls:ToneControls|None=None
     def __post_init__(self):
         if not self.id: raise ValueError('tone profile id required')
         if not -1.0 <= self.pan <= 1.0: raise ValueError('pan must be -1..1')
