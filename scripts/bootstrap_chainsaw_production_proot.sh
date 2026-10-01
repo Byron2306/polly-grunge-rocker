@@ -69,8 +69,11 @@ SD_SFZ="$SD_DIR/Salamander Drumkit.sfz"
 [[ -f "$SD_DIR/OH/kick_OH_P_1.wav" ]] || fail "Salamander WAV samples missing after install"
 
 say "Installing gdown helper in isolated bootstrap venv"
-python3 -m venv "$HELPER_VENV"
-"$HELPER_VENV/bin/pip" -q install --upgrade pip gdown
+if [[ ! -x "$HELPER_VENV/bin/gdown" ]]; then
+  rm -rf "$HELPER_VENV"
+  python3 -m venv "$HELPER_VENV"
+  "$HELPER_VENV/bin/pip" -q install --upgrade pip gdown
+fi
 
 say "Downloading Metal GTX"
 MG_DIR="$ASSET_ROOT/guitar/Metal-GTX"
@@ -80,8 +83,8 @@ if ! find "$MG_DIR" -type f -iname '*.sfz' -print -quit 2>/dev/null | grep -q .;
   MG_ARCHIVE="$ASSET_ROOT/guitar/metal-gtx.download"
   rm -f "$MG_ARCHIVE"
   "$HELPER_VENV/bin/gdown" \
-    --id 1FurY3_x_tog_56irX1VDNyRCUt5JD7bO \
-    --output "$MG_ARCHIVE"
+    1FurY3_x_tog_56irX1VDNyRCUt5JD7bO \
+    -O "$MG_ARCHIVE"
   BYTES="$(stat -c %s "$MG_ARCHIVE" 2>/dev/null || echo 0)"
   (( BYTES > 500000000 )) || fail "Metal GTX download is suspiciously small (${BYTES} bytes)"
   7z x -y "$MG_ARCHIVE" -o"$MG_DIR" >/dev/null
