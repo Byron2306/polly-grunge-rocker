@@ -11,6 +11,7 @@ class ArticulationMap:
     midi_channel:int|None=None
     velocity_min:int=1
     velocity_max:int=127
+    sfz_path:Path|None=None
     def __post_init__(self):
         if not self.name: raise ValueError('articulation name required')
         if self.keyswitch is not None and not 0 <= self.keyswitch <= 127: raise ValueError('keyswitch must be 0..127')
