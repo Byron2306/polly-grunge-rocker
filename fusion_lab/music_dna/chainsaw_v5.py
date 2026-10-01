@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Mapping
 
 from fusion_lab.chainsaw_diplomacy import build_chainsaw_diplomacy, chainsaw_review_rubric
-from fusion_lab.mix_truth import THRASH_1988_MIX_LEVELS
 from fusion_lab.production_midi import write_articulation_midis
 from fusion_lab.production_model import ProductionConfig
 from fusion_lab.production_pipeline import default_humanization, render_chainsaw_production
 from fusion_lab.production_render import (
-    apply_tone_chain,
     check_production_dependencies,
     load_instrument_profiles,
     load_tone_profiles,
@@ -24,7 +23,7 @@ from .audio_truth import validate_articulation_audio
 from .chainsaw_gate import GateState, evaluate_isolated_guitar_gate
 from .genre_profiles import load_seed_genre_profiles
 from .model import MusicDNAReport
-from .production_topology import evidence_from_profiles
+from .production_topology import evidence_from_profiles, execute_tone_chain_with_evidence
 from .production_truth import validate_production_truth
 
 
@@ -34,6 +33,21 @@ EXPECTED_LAYERS = {'rhythm_guitar_L', 'rhythm_guitar_R', 'bass', 'drums', 'lead_
 def _write_json(path: Path, payload: Mapping | dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n')
+
+
+def _sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with Path(path).open('rb') as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _config_hashes(instrument_config: Path, tone_config: Path) -> dict[str, str]:
+    return {
+        'instrument_config_sha256': _sha256(Path(instrument_config)),
+        'tone_config_sha256': _sha256(Path(tone_config)),
+    }
 
 
 def _load_thr_profile(profile_root: Path):
@@ -117,6 +131,7 @@ def analyze_chainsaw_v5(
         'human_notes': [],
         'isolated_guitar_rendered': False,
         'full_render_allowed': False,
+        'config_hashes': _config_hashes(instrument_config, tone_config),
     }
     _write_json(out_dir / 'v5-gate.json', payload)
     return payload
@@ -132,7 +147,7 @@ def _render_rhythm_layer(
     out_dir: Path,
     sample_rate: int,
     sfizz_executable: str,
-) -> tuple[Path, dict[str, Path]]:
+):
     midi_dir = out_dir / 'midi' / 'articulations'
     raw_dir = out_dir / 'articulations' / layer
     clean_dir = out_dir / 'clean'
@@ -149,8 +164,8 @@ def _render_rhythm_layer(
     clean = clean_dir / f'{layer}.wav'
     mix_production_stems(art_wavs, clean)
     final = stem_dir / f'{layer}.wav'
-    apply_tone_chain(clean, final, tone)
-    return final, art_wavs
+    executed = execute_tone_chain_with_evidence(clean, final, tone)
+    return final, art_wavs, executed
 
 
 def render_isolated_guitar(
@@ -164,13 +179,14 @@ def render_isolated_guitar(
     sfizz_executable: str = 'sfizz_render',
 ) -> dict:
     out_dir = Path(out_dir)
-    host, profile, instruments, tones, report, machine_gate = build_machine_gate(
+    host, _, instruments, tones, report, machine_gate = build_machine_gate(
         instrument_config=instrument_config,
         tone_config=tone_config,
         profile_root=profile_root,
         seed=seed,
     )
     _write_json(out_dir / 'music-dna-report.json', report.to_dict())
+    hashes = _config_hashes(instrument_config, tone_config)
     if machine_gate.state is GateState.REFUSE:
         payload = {
             'state': GateState.REFUSE.value,
@@ -179,6 +195,7 @@ def render_isolated_guitar(
             'human_notes': [],
             'isolated_guitar_rendered': False,
             'full_render_allowed': False,
+            'config_hashes': hashes,
         }
         _write_json(out_dir / 'v5-gate.json', payload)
         raise RuntimeError('V5_MACHINE_GATE_REFUSE: ' + ','.join(machine_gate.reasons))
@@ -191,8 +208,9 @@ def render_isolated_guitar(
     humanization = default_humanization(seed)
     processed: dict[str, Path] = {}
     articulation_wavs: dict[str, dict[str, Path]] = {}
+    executed_topology: dict[str, dict] = {}
     for layer in ('rhythm_guitar_L', 'rhythm_guitar_R'):
-        final, rendered = _render_rhythm_layer(
+        final, rendered, executed = _render_rhythm_layer(
             host=host,
             layer=layer,
             instrument=instruments[layer],
@@ -204,6 +222,7 @@ def render_isolated_guitar(
         )
         processed[layer] = final
         articulation_wavs[layer] = rendered
+        executed_topology[layer] = executed.to_dict()
 
     left = articulation_wavs['rhythm_guitar_L']
     mute_path = left.get('PALM_MUTE_DOWNPICK') or left.get('PALM_MUTE_GALLOP')
@@ -220,6 +239,8 @@ def render_isolated_guitar(
             'isolated_guitar_rendered': True,
             'full_render_allowed': False,
             'audio_truth': audio_truth.to_dict(),
+            'executed_topology': executed_topology,
+            'config_hashes': hashes,
         }
         _write_json(out_dir / 'v5-gate.json', payload)
         raise RuntimeError('V5_ARTICULATION_AUDIO_REFUSE: ' + ','.join(audio_truth.reasons))
@@ -235,9 +256,16 @@ def render_isolated_guitar(
         'isolated_guitar_mix': str(isolated_mix),
         'full_render_allowed': False,
         'audio_truth': audio_truth.to_dict(),
+        'executed_topology': executed_topology,
+        'config_hashes': hashes,
         'review_rubric': dict(chainsaw_review_rubric()),
     }
     _write_json(out_dir / 'v5-gate.json', payload)
+
+    report_payload = report.to_dict()
+    report_payload['production_truth']['executed_topology'] = executed_topology
+    report_payload['production_truth']['audio_truth'] = audio_truth.to_dict()
+    _write_json(out_dir / 'music-dna-report.json', report_payload)
     return payload
 
 
@@ -269,6 +297,7 @@ def render_full_after_gate(
     gate_path: Path,
     instrument_config: Path,
     tone_config: Path,
+    profile_root: Path,
     seed: int = 1988,
     sample_rate: int = 48000,
     sfizz_executable: str = 'sfizz_render',
@@ -276,6 +305,18 @@ def render_full_after_gate(
     gate = json.loads(Path(gate_path).read_text())
     if gate.get('state') != GateState.ALLOW_FULL_RENDER.value or not gate.get('full_render_allowed'):
         raise RuntimeError('V5_FULL_RENDER_REFUSED: isolated guitar gate has not passed human review')
+    if gate.get('config_hashes') != _config_hashes(instrument_config, tone_config):
+        raise RuntimeError('V5_FULL_RENDER_REFUSED: reviewed production config changed')
+
+    _, _, instruments, tones, report, machine_gate = build_machine_gate(
+        instrument_config=instrument_config,
+        tone_config=tone_config,
+        profile_root=profile_root,
+        seed=seed,
+    )
+    if machine_gate.state is GateState.REFUSE:
+        raise RuntimeError('V5_FULL_RENDER_REFUSED: machine gate no longer passes')
+
     full_dir = Path(out_dir) / 'full'
     manifest = render_chainsaw_production(
         out_dir=full_dir,
@@ -285,7 +326,17 @@ def render_full_after_gate(
         sample_rate=sample_rate,
         sfizz_executable=sfizz_executable,
     )
+    configured_topology = {
+        layer: {
+            'stages': [stage.kind for stage in tones[layer].stages],
+            'amp_stage_kind': next((stage.kind for stage in tones[layer].stages if stage.kind in {'real_amp_sim', 'external_amp', 'plugin_amp', 'captured_amp'}), None),
+            'cabinet_ir': next((str(stage.asset_path) for stage in tones[layer].stages if stage.asset_path is not None), None),
+        }
+        for layer in sorted(tones)
+    }
     manifest['music_dna_gate'] = gate
+    manifest['music_dna_decision'] = report.decision.state.value
+    manifest['executed_topology'] = configured_topology
     _write_json(full_dir / 'production-manifest.json', manifest)
     return manifest
 
@@ -317,7 +368,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == 'review':
         payload = record_isolated_review(gate_path=args.gate, state=args.state, notes=args.note)
     elif args.command == 'full':
-        payload = render_full_after_gate(out_dir=args.out, gate_path=args.gate, instrument_config=args.instrument_config, tone_config=args.tone_config, seed=args.seed, sample_rate=args.sample_rate, sfizz_executable=args.sfizz_render)
+        payload = render_full_after_gate(out_dir=args.out, gate_path=args.gate, instrument_config=args.instrument_config, tone_config=args.tone_config, profile_root=args.profile_root, seed=args.seed, sample_rate=args.sample_rate, sfizz_executable=args.sfizz_render)
     else:
         return 2
     print(json.dumps(payload, indent=2, sort_keys=True))
