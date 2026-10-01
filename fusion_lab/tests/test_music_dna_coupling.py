@@ -32,7 +32,9 @@ class CouplingTests(unittest.TestCase):
         self.assertLess(b['bass_guitar_lock_rate'], 0.1)
 
     def test_dense_unrelated_drums_do_not_fake_coupling(self):
-        host = make_host((0, 480, 960), (0, 480, 960), tuple(range(120, 1800, 120)))
+        # Dense 16th-note-ish kick activity, deliberately offset so none of the
+        # kicks coincide with the guitar onsets at 0, 480, and 960 ticks.
+        host = make_host((0, 480, 960), (0, 480, 960), tuple(range(60, 1800, 120)))
         result = extract_coupling_features(host, tolerance_ticks=10)
         self.assertLess(result['guitar_kick_coupling'], 0.2)
 
