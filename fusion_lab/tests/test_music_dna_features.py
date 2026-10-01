@@ -30,6 +30,18 @@ class MusicDNAFeatureTests(unittest.TestCase):
         self.assertGreater(values['harmony.pedal_note_ratio'], 0.7)
         self.assertGreater(values['guitar.attack_density'], 0.4)
 
+    def test_power_chord_fifths_do_not_count_as_root_motion(self):
+        events = []
+        for tick, root in ((0, 40), (240, 40), (480, 41), (720, 40)):
+            events += [
+                NoteEvent(tick, 180, root, 100, 2, 'PALM_MUTE_DOWNPICK', 'RHYTHM_SUPPORT'),
+                NoteEvent(tick, 180, root + 7, 100, 2, 'PALM_MUTE_DOWNPICK', 'RHYTHM_SUPPORT'),
+            ]
+        values = extract_host_features(host_with(events)).values
+        self.assertEqual(values['harmony.pedal_note_ratio'], 0.75)
+        self.assertGreater(values['harmony.minor_second_rate'], 0.5)
+        self.assertLess(values['harmony.perfect_fifth_rate'], 0.1)
+
     def test_black_fixture_exposes_tremolo_without_palm_mute(self):
         events = [
             NoteEvent(i * 120, 100, 52 + (i % 5), 95, 2, 'TREMOLO_PICK', 'MELODIC_TEXTURE')
