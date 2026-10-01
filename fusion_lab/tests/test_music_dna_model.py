@@ -1,0 +1,65 @@
+import math
+import unittest
+
+from fusion_lab.music_dna.model import (
+    DecisionState,
+    FeatureVector,
+    GenreDecision,
+    HardConstraint,
+    MusicDNAReport,
+    RangeBand,
+)
+
+
+class MusicDNAModelTests(unittest.TestCase):
+    def test_range_band_rejects_inverted_bounds(self):
+        with self.assertRaises(ValueError):
+            RangeBand(0.5, 0.4, 0.8, 1.0)
+        with self.assertRaises(ValueError):
+            RangeBand(0.0, 0.7, 0.6, 1.0)
+
+    def test_probability_features_are_bounded(self):
+        with self.assertRaises(ValueError):
+            FeatureVector({'palm_mute_ratio': 1.01})
+        with self.assertRaises(ValueError):
+            FeatureVector({'blast_probability': -0.01})
+
+    def test_decision_state_contract(self):
+        self.assertEqual(
+            tuple(state.value for state in DecisionState),
+            ('ALLOW', 'MUTATE', 'REJECT'),
+        )
+
+    def test_decision_reasons_are_immutable(self):
+        decision = GenreDecision(DecisionState.MUTATE, 'THRASH_CLASSIC', ('x',), 0.25)
+        self.assertIsInstance(decision.reasons, tuple)
+
+    def test_report_serializes_deterministically(self):
+        report = MusicDNAReport(
+            genre_profile='THRASH_CLASSIC',
+            feature_vector={'b': 0.2, 'a': 0.1},
+            coupling={'guitar_kick': 0.7},
+            hook_score={'total': 0.8},
+            production_truth={'cabinet': True},
+            decision=GenreDecision(DecisionState.ALLOW, 'THRASH_CLASSIC', (), 0.1),
+        )
+        first = report.to_dict()
+        second = report.to_dict()
+        self.assertEqual(first, second)
+        self.assertEqual(list(first['feature_vector']), ['a', 'b'])
+        self.assertEqual(first['decision']['state'], 'ALLOW')
+
+    def test_normalized_distance_is_zero_inside_preferred_band(self):
+        band = RangeBand(0.0, 0.4, 0.7, 1.0)
+        self.assertEqual(band.normalized_distance(0.55), 0.0)
+        self.assertGreater(band.normalized_distance(0.2), 0.0)
+        self.assertTrue(math.isfinite(band.normalized_distance(0.2)))
+
+    def test_hard_constraint_is_simple_and_explicit(self):
+        constraint = HardConstraint('cabinet_required', True)
+        self.assertEqual(constraint.id, 'cabinet_required')
+        self.assertTrue(constraint.required)
+
+
+if __name__ == '__main__':
+    unittest.main()
