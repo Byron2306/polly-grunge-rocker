@@ -43,6 +43,10 @@ class MusicDNAProfileTests(unittest.TestCase):
         thrash = load_seed_genre_profiles(DATA_ROOT / 'genres')['THRASH_CLASSIC']
         self.assertEqual(thrash.guitar.features['sustain_ratio'].minimum, 0.0)
 
+    def test_thrashy_pedal_riff_does_not_require_root_motion_fifths(self):
+        thrash = load_seed_genre_profiles(DATA_ROOT / 'genres')['THRASH_CLASSIC']
+        self.assertEqual(thrash.harmony.features['perfect_fifth_rate'].preferred_minimum, 0.0)
+
     def test_malformed_profile_fails_loudly(self):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / 'bad.json'
