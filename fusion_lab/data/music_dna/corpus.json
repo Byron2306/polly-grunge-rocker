@@ -1,0 +1,12 @@
+{
+  "schema": "polly.music-dna.corpus.v1",
+  "observations": [
+    {"genre":"thrash","artist":"Metallica","track":"Battery","features":{"tempo_bpm":200.0,"palm_mute_ratio":0.72,"pedal_note_ratio":0.68,"gallop_rate":0.31},"provenance":["curated aggregate from published lesson/reference research"]},
+    {"genre":"black_metal","artist":"Mayhem","track":"Freezing Moon","features":{"tempo_bpm":180.0,"tremolo_ratio":0.71,"palm_mute_ratio":0.08,"blast_probability":0.55},"provenance":["curated aggregate from published lesson/reference research"]},
+    {"genre":"death_metal","artist":"Death","track":"Pull the Plug","features":{"tempo_bpm":170.0,"chromaticity":0.61,"palm_mute_ratio":0.48,"blast_probability":0.35},"provenance":["curated aggregate from published lesson/reference research"]},
+    {"genre":"doom_metal","artist":"Black Sabbath","track":"Black Sabbath","features":{"tempo_bpm":82.0,"attack_density":0.18,"sustain_ratio":0.82,"tritone_rate":0.28},"provenance":["curated aggregate from published lesson/reference research"]},
+    {"genre":"punk","artist":"Ramones","track":"Blitzkrieg Bop","features":{"tempo_bpm":176.0,"downpick_ratio":0.91,"hook_recurrence":0.82,"attack_density":0.69},"provenance":["curated aggregate from published lesson/reference research"]},
+    {"genre":"glam_metal","artist":"Ratt","track":"Round and Round","features":{"tempo_bpm":126.0,"hook_recurrence":0.88,"bend_rate":0.42,"chorus_hook_recurrence":0.89},"provenance":["curated aggregate from published lesson/reference research"]},
+    {"genre":"progressive_metal","artist":"Tool","track":"Lateralus","features":{"tempo_bpm":95.0,"meter_change_probability":0.73,"motif_transformation":0.84,"rhythmic_independence":0.76},"provenance":["curated aggregate from published lesson/reference research"]}
+  ]
+}
