@@ -1,10 +1,28 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
+import shutil
 
 from fusion_lab.production_model import InstrumentProfile, ToneProfile
 
 from .production_truth import ProductionEvidence, REAL_AMP_KINDS
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutedToneEvidence:
+    executed_stages: tuple[str, ...]
+    amp_stage_kind: str | None
+    cabinet_ir: str | None
+    output_path: str
+
+    def to_dict(self) -> dict:
+        return {
+            'executed_stages': list(self.executed_stages),
+            'amp_stage_kind': self.amp_stage_kind,
+            'cabinet_ir': self.cabinet_ir,
+            'output_path': self.output_path,
+        }
 
 
 def _amp_kind(profile: ToneProfile) -> str | None:
@@ -67,4 +85,34 @@ def evidence_from_profiles(
         right_performance_id=f'{right_instrument.id}:R:{seed}:timing4:velocity9',
         palm_mute_signature=palm,
         sustain_signature=sustain,
+    )
+
+
+def execute_tone_chain_with_evidence(source: Path, destination: Path, profile: ToneProfile) -> ExecutedToneEvidence:
+    from fusion_lab.production_render import apply_tone_chain
+
+    source = Path(source)
+    destination = Path(destination)
+    if not source.is_file():
+        raise RuntimeError(f'PRODUCTION_MISSING_SOURCE_WAV: {source}')
+
+    for stage in profile.stages:
+        if stage.executable and shutil.which(stage.executable) is None:
+            raise RuntimeError(f'PRODUCTION_MISSING_TONE_EXECUTABLE: {stage.executable}')
+        if stage.asset_path is not None and not stage.asset_path.is_file():
+            raise RuntimeError(f'PRODUCTION_MISSING_TONE_ASSET: {stage.asset_path}')
+
+    apply_tone_chain(source, destination, profile)
+    if not destination.is_file() or destination.stat().st_size == 0:
+        raise RuntimeError('PRODUCTION_TONE_OUTPUT_MISSING')
+
+    stages: list[str] = []
+    if profile.controls is not None:
+        stages.append('controls')
+    stages.extend(stage.kind for stage in profile.stages)
+    return ExecutedToneEvidence(
+        executed_stages=tuple(stages),
+        amp_stage_kind=_amp_kind(profile),
+        cabinet_ir=_cabinet(profile),
+        output_path=str(destination),
     )
