@@ -8,6 +8,9 @@ import shlex
 import subprocess
 
 
+REQUIRED_PLACEHOLDERS = ('{input}', '{output}', '{cab}')
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Run a configured real amp/cab processor for Fusion Lab.')
     parser.add_argument('--input', type=Path, required=True)
@@ -18,6 +21,9 @@ def main(argv: list[str] | None = None) -> int:
     template = os.environ.get('FUSION_REAL_AMP_COMMAND_TEMPLATE', '').strip()
     if not template:
         raise RuntimeError('FUSION_REAL_AMP_COMMAND_TEMPLATE_UNSET')
+    missing = [token for token in REQUIRED_PLACEHOLDERS if token not in template]
+    if missing:
+        raise RuntimeError('FUSION_REAL_AMP_TEMPLATE_MISSING_PLACEHOLDERS: ' + ','.join(missing))
     if not args.input.is_file():
         raise FileNotFoundError(f'FUSION_REAL_AMP_INPUT_MISSING: {args.input}')
     if not args.cab.is_file():
