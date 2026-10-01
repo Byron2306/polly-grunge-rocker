@@ -1,0 +1,14 @@
+{
+  "schema":"polly.music-dna.genre-profile.v1",
+  "id":"GLAM_METAL_CLASSIC",
+  "tempo":[95,115,170,190],
+  "meters":{"4/4":0.94,"6/8":0.05,"3/4":0.01},
+  "harmony":{"features":{"pedal_note_ratio":[0.05,0.12,0.4,0.65],"chromaticity":[0.0,0.05,0.3,0.5],"minor_second_rate":[0.0,0.02,0.15,0.3],"tritone_rate":[0.0,0.02,0.15,0.3],"perfect_fifth_rate":[0.2,0.4,0.85,1.0]}},
+  "guitar":{"features":{"attack_density":[0.2,0.35,0.75,0.9],"palm_mute_ratio":[0.05,0.15,0.55,0.75],"tremolo_ratio":[0.0,0.0,0.12,0.25],"downpick_ratio":[0.25,0.4,0.8,0.95],"gallop_rate":[0.0,0.02,0.18,0.35],"sustain_ratio":[0.12,0.25,0.65,0.85],"hook_recurrence":[0.5,0.7,1.0,1.0]}},
+  "bass":{"features":{"guitar_lock_rate":[0.4,0.6,0.9,1.0],"kick_lock_rate":[0.4,0.6,0.9,1.0],"fill_probability":[0.03,0.08,0.3,0.5]}},
+  "drums":{"features":{"blast_probability":[0.0,0.0,0.01,0.03],"double_kick_density":[0.0,0.02,0.18,0.35],"skank_probability":[0.0,0.0,0.08,0.18],"guitar_kick_coupling":[0.25,0.45,0.8,0.95]}},
+  "vocals":{"features":{"syllable_density":[0.2,0.35,0.75,0.95],"chorus_hook_recurrence":[0.55,0.75,1.0,1.0]}},
+  "keys":{"features":{"presence_probability":[0.0,0.05,0.35,0.65]}},
+  "arrangement":{"features":{"phrase_end_mutation":[0.1,0.25,0.65,0.85],"section_contrast":[0.2,0.4,0.85,1.0],"solo_probability":[0.35,0.55,0.95,1.0]}},
+  "production":{"features":{"gate_strength":[0.0,0.05,0.35,0.55],"stereo_width":[0.65,0.8,1.0,1.0]},"hard_constraints":[{"id":"amp_distortion_required","required":true},{"id":"cabinet_required","required":true},{"id":"distinct_double_tracks","required":true}]}
+}
