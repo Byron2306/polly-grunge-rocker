@@ -23,9 +23,6 @@ def _attack_density(events: tuple[NoteEvent, ...], song_ticks: int, tpq: int) ->
     if not events:
         return 0.0
     beats = max(1.0, song_ticks / tpq)
-    # Treat a fully occupied eighth-note grid as density 1.0. This keeps
-    # sustained one-hit-per-beat material sparse while allowing thrash and
-    # tremolo material to approach the top of the normalized range.
     eighth_note_slots = beats * 2.0
     return min(1.0, len({e.start_tick for e in events}) / eighth_note_slots)
 
@@ -43,19 +40,33 @@ def _sustain_ratio(events: tuple[NoteEvent, ...], tpq: int) -> float:
     return long / len(events)
 
 
-def _pedal_note_ratio(events: tuple[NoteEvent, ...]) -> float:
+def _onset_roots(events: tuple[NoteEvent, ...]) -> tuple[int, ...]:
     if not events:
+        return ()
+    by_onset: dict[int, list[int]] = {}
+    for event in events:
+        by_onset.setdefault(event.start_tick, []).append(event.note)
+    return tuple(min(by_onset[tick]) for tick in sorted(by_onset))
+
+
+def _pedal_note_ratio(events: tuple[NoteEvent, ...]) -> float:
+    roots = _onset_roots(events)
+    if not roots:
         return 0.0
-    counts = Counter(e.note for e in events)
-    return max(counts.values()) / len(events)
+    counts = Counter(roots)
+    return max(counts.values()) / len(roots)
+
+
+def _root_intervals(events: tuple[NoteEvent, ...]) -> tuple[int, ...]:
+    roots = _onset_roots(events)
+    return tuple(abs(b - a) % 12 for a, b in zip(roots, roots[1:]))
 
 
 def _chromaticity(events: tuple[NoteEvent, ...]) -> float:
-    ordered = sorted(events, key=lambda e: (e.start_tick, e.note))
-    if len(ordered) < 2:
+    intervals = _root_intervals(events)
+    if not intervals:
         return 0.0
-    intervals = [abs(b.note - a.note) for a, b in zip(ordered, ordered[1:])]
-    return sum(1 for interval in intervals if interval in (1, 2, 6)) / len(intervals)
+    return sum(1 for interval in intervals if interval in (1, 2, 6, 10, 11)) / len(intervals)
 
 
 def extract_role_features(host: HostComposition, role: str) -> Mapping[str, float]:
@@ -92,8 +103,7 @@ def extract_role_features(host: HostComposition, role: str) -> Mapping[str, floa
 
 def extract_harmony_features(host: HostComposition) -> Mapping[str, float]:
     guitar = _track(host, 'RHYTHM_GUITAR')
-    ordered = sorted(guitar, key=lambda e: (e.start_tick, e.note))
-    intervals = [abs(b.note - a.note) % 12 for a, b in zip(ordered, ordered[1:])]
+    intervals = _root_intervals(guitar)
     denominator = max(1, len(intervals))
     return {
         'pedal_note_ratio': _pedal_note_ratio(guitar),
