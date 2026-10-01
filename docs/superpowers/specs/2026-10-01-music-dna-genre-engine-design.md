@@ -39,7 +39,7 @@ The engine stores distributions, feature ranges, and relationships. Individual r
 
 ## 3. Architecture
 
-The system is divided into six bounded components.
+The system is divided into cooperating, independently testable components. Their boundaries follow responsibility rather than an arbitrary component count.
 
 ### 3.1 Corpus descriptors
 
