@@ -112,9 +112,10 @@ def _riff_b_sprint(base: int):
     for beat in range(4):
         tick = base + beat * TPQ
         root = 40 if beat < 3 else 42
-        rows.extend(_root5(root, tick, 200, 110, 'PALM_MUTE_DOWNPICK', g))
-        rows.extend(_root5(root, tick + TPQ // 2, 100, 106, 'PALM_MUTE_GALLOP_DOWNPICK', g))
-        rows.extend(_root5(root, tick + 3 * TPQ // 4, 100, 104, 'PALM_MUTE_GALLOP', g))
+        rows.extend(_root5(root, tick, 100, 112, 'PALM_MUTE_DOWNPICK', g))
+        rows.extend(_root5(root, tick + TPQ // 4, 90, 108, 'PALM_MUTE_GALLOP_DOWNPICK', g))
+        rows.extend(_root5(root, tick + TPQ // 2, 90, 105, 'PALM_MUTE_GALLOP', g))
+        rows.extend(_root5(root, tick + 3 * TPQ // 4, 90, 109, 'PALM_MUTE_DOWNPICK', g))
     return rows
 
 
@@ -137,7 +138,7 @@ def _riff_d_panic(base: int):
     rows = []
     roots = (40, 41, 46, 42, 47, 41, 43, 40)
     for index, root in enumerate(roots):
-        art = 'PALM_MUTE_DOWNPICK' if index in (0, 3, 7) else 'CHROMATIC_POWER'
+        art = 'PALM_MUTE_DOWNPICK' if index in (0, 3, 7) else 'CHROMATIC_POWER_DOWNPICK'
         rows.extend(_root5(root, base + index * TPQ // 2, TPQ // 3, 110 + (index % 3) * 4, art, g))
     return rows
 
@@ -197,14 +198,14 @@ def _bass(schedule: tuple[RiffBarPlan, ...], rhythm):
         vel = 104 if any(item.articulation and 'DOWNPICK' in item.articulation for item in items) else 100
         events.append(NoteEvent(tick, items[0].duration_ticks, max(28, root - 12), vel, 1, 'PICKED_FOLLOW', 'GROOVE_ANCHOR'))
 
-    fill_notes = (28, 31, 34, 35)
+    fill_notes = (28, 31, 34, 35, 34, 28)
     boundaries = _family_boundaries(schedule)
     for boundary_bar in sorted(boundaries | {64}):
         start = boundary_bar * BAR_TICKS - TPQ
         if start < 0:
             continue
         for i, note in enumerate(fill_notes):
-            events.append(NoteEvent(start + i * TPQ // 4, TPQ // 8, note, 106 + i * 4, 1, 'PHRASE_END_FILL', 'GROOVE_FILL'))
+            events.append(NoteEvent(start + i * TPQ // 6, TPQ // 10, note, 106 + i * 3, 1, 'PHRASE_END_FILL', 'GROOVE_FILL'))
     return tuple(sorted(events, key=lambda e: (e.start_tick, e.note, e.velocity)))
 
 
