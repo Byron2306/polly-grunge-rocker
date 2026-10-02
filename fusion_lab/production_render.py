@@ -150,7 +150,14 @@ def mix_production_stems(stems:Mapping[str,Path],mix_path:Path)->None:
     cmd=[ffmpeg,'-y']
     for path in stems.values(): cmd += ['-i',str(path)]
     cmd += ['-filter_complex',f'amix=inputs={len(stems)}:normalize=0','-c:a','pcm_s16le',str(mix_path)]
-    subprocess.run(cmd,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+    try:
+        subprocess.run(cmd,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+    except subprocess.CalledProcessError as exc:
+        stem_desc=', '.join(f'{name}={Path(path)}' for name,path in stems.items())
+        stderr=(exc.stderr or '').strip()
+        raise RuntimeError(
+            f'PRODUCTION_MIX_FAILED: returncode={exc.returncode}; stems=[{stem_desc}]; ffmpeg_stderr={stderr}'
+        ) from exc
 
 def _controls_manifest(c:ToneControls|None):
     if c is None: return None
