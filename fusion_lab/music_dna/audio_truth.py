@@ -30,7 +30,7 @@ class ArticulationAudioTruth:
             'ok': self.ok,
             'reasons': list(self.reasons),
             'envelope_distance': self.envelope_distance,
-            'mute': self.mute.__dict__ if hasattr(self.mute, '__dict__') else {
+            'mute': {
                 'rms': self.mute.rms,
                 'peak': self.mute.peak,
                 'crest_factor': self.mute.crest_factor,
@@ -38,7 +38,7 @@ class ArticulationAudioTruth:
                 'late_rms': self.mute.late_rms,
                 'alive': self.mute.alive,
             },
-            'sustain': self.sustain.__dict__ if hasattr(self.sustain, '__dict__') else {
+            'sustain': {
                 'rms': self.sustain.rms,
                 'peak': self.sustain.peak,
                 'crest_factor': self.sustain.crest_factor,
@@ -53,6 +53,7 @@ def _decode_pcm_frames(path: Path) -> tuple[list[float], int]:
     with wave.open(str(path), 'rb') as wav:
         channels = wav.getnchannels()
         sampwidth = wav.getsampwidth()
+        sample_rate = wav.getframerate()
         frames = wav.readframes(wav.getnframes())
     if sampwidth != 2:
         raise ValueError('only 16-bit PCM WAV is supported for audio truth')
@@ -64,24 +65,81 @@ def _decode_pcm_frames(path: Path) -> tuple[list[float], int]:
         for i in range(0, len(values), channels):
             frame = values[i:i + channels]
             mono.append(sum(frame) / (len(frame) * 32768.0))
-    return mono, channels
+    return mono, sample_rate
 
 
-def _rms(values: list[float]) -> float:
+def _rms(values) -> float:
+    values = list(values)
     if not values:
         return 0.0
     return math.sqrt(sum(value * value for value in values) / len(values))
 
 
+def _mean(values: list[float]) -> float:
+    return 0.0 if not values else sum(values) / len(values)
+
+
+def _local_envelope(values: list[float], sample_rate: int) -> tuple[float, float]:
+    """Estimate attack and tail energy around actual note onsets.
+
+    Articulation stems are often tens of seconds long with silence between notes.
+    Comparing the first/last quarter of the entire file measures arrangement, not
+    articulation. Use short RMS blocks, find attacks that begin after silence,
+    and compare the local attack to its immediate tail instead.
+    """
+    if not values or sample_rate <= 0:
+        return 0.0, 0.0
+
+    block_frames = max(1, int(sample_rate * 0.010))  # 10 ms
+    blocks = [
+        _rms(values[i:i + block_frames])
+        for i in range(0, len(values), block_frames)
+    ]
+    if not blocks:
+        return 0.0, 0.0
+
+    peak_block = max(blocks)
+    threshold = max(0.001, peak_block * 0.08)
+    quiet_threshold = threshold * 0.50
+
+    onsets: list[int] = []
+    for i, energy in enumerate(blocks):
+        if energy < threshold:
+            continue
+        if i == 0 or all(blocks[j] < quiet_threshold for j in range(max(0, i - 3), i)):
+            onsets.append(i)
+
+    # Continuous synthetic probes may begin immediately and never cross back
+    # through silence. Their start is still a valid attack.
+    if not onsets and blocks[0] >= threshold:
+        onsets = [0]
+
+    early_values: list[float] = []
+    late_values: list[float] = []
+    for onset in onsets:
+        early_slice = blocks[onset:min(len(blocks), onset + 3)]       # 0-30 ms
+        late_slice = blocks[min(len(blocks), onset + 8):min(len(blocks), onset + 18)]  # 80-180 ms
+        if not early_slice or not late_slice:
+            continue
+        early_values.append(max(early_slice))
+        late_values.append(_mean(late_slice))
+
+    if early_values:
+        return _mean(early_values), _mean(late_values)
+
+    # Last-resort fallback for very short files: compare local beginning/end,
+    # never file quarters on a long sparse stem.
+    window = min(len(values), max(1, int(sample_rate * 0.050)))
+    return _rms(values[:window]), _rms(values[-window:])
+
+
 def analyze_wav(path: Path) -> WavMetrics:
-    values, _ = _decode_pcm_frames(Path(path))
+    values, sample_rate = _decode_pcm_frames(Path(path))
     if not values:
         return WavMetrics(0.0, 0.0, 0.0, 0.0, 0.0, False)
     rms = _rms(values)
     peak = max(abs(value) for value in values)
-    split = max(1, len(values) // 4)
-    early = _rms(values[:split])
-    late = _rms(values[-split:])
+    early, late = _local_envelope(values, sample_rate)
     crest = 0.0 if rms == 0 else peak / rms
     alive = rms >= 0.001 and peak >= 0.003
     return WavMetrics(rms, peak, crest, early, late, alive)
