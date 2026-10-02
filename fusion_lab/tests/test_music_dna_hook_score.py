@@ -42,6 +42,26 @@ class HookScoreTests(unittest.TestCase):
         result = score_hook(tuple(base), 480)
         self.assertGreater(result['phrase_end_mutation'], 0.0)
 
+    def test_phrase_end_mutation_measures_phrase_ending_diversity_not_song_endpoints(self):
+        tpq = 480
+        bar_ticks = tpq * 4
+        events = []
+        # Two four-bar phrases share the same core motif. Their phrase-ending
+        # bars differ, but the song's first and last bars are intentionally
+        # very different so endpoint-only scoring would falsely saturate.
+        for bar in range(8):
+            start = bar * bar_ticks
+            notes = (40, 40, 43, 40)
+            if bar == 3:
+                notes = (40, 40, 46, 47)
+            elif bar == 7:
+                notes = (40, 43, 46, 40)
+            for i, note in enumerate(notes):
+                events.append(NoteEvent(start + i * 240, 180, note, 100, 2, 'PALM_MUTE_DOWNPICK', 'RHYTHM_SUPPORT'))
+        result = score_hook(tuple(events), tpq)
+        self.assertGreater(result['phrase_end_mutation'], 0.0)
+        self.assertLess(result['phrase_end_mutation'], 0.95)
+
 
 if __name__ == '__main__':
     unittest.main()
