@@ -49,6 +49,7 @@ class RiffMorphologyReport:
     section_riff_contrast: float
     transition_density: float
     gesture_diversity: int
+    gesture_metadata_present: bool
 
     def metrics(self) -> dict[str, float]:
         return {
@@ -63,6 +64,7 @@ class RiffMorphologyReport:
     def to_dict(self) -> dict[str, object]:
         return {
             **self.metrics(),
+            'gesture_metadata_present': self.gesture_metadata_present,
             'family_by_bar': list(self.family_by_bar),
             'gesture_by_bar': [gesture.value for gesture in self.gesture_by_bar],
             'families': [
@@ -85,10 +87,10 @@ def _semantic_articulation(raw: str | None) -> str:
     value = (raw or 'SUSTAIN').upper()
     if 'GALLOP' in value:
         return 'GALLOP'
-    if 'DOWNPICK' in value:
-        return 'DOWNPICK'
     if 'CHROMATIC' in value:
         return 'CHROMATIC'
+    if 'DOWNPICK' in value:
+        return 'DOWNPICK'
     if 'OPEN' in value or 'RELEASE' in value:
         return 'RELEASE'
     if 'TREMOLO' in value:
@@ -237,7 +239,8 @@ def analyze_riff_morphology(host: HostComposition, explicit_gestures: Mapping[in
         bars_by_family[match].append(bar)
         family_by_bar.append(f'RF{match + 1}')
 
-    gesture_source: Mapping[int, Gesture | str] = explicit_gestures or _embedded_gestures(rhythm, bar_ticks, end_bar)
+    embedded = _embedded_gestures(rhythm, bar_ticks, end_bar)
+    gesture_source: Mapping[int, Gesture | str] = explicit_gestures if explicit_gestures is not None else embedded
     gesture_by_bar = tuple(
         _coerce_gesture(gesture_source.get(bar)) if family_by_bar[bar] is not None else Gesture.UNKNOWN
         for bar in range(end_bar)
@@ -278,4 +281,5 @@ def analyze_riff_morphology(host: HostComposition, explicit_gestures: Mapping[in
         _section_contrast(host, family_by_bar),
         transition_bars / populated_bar_count,
         len(non_unknown),
+        bool(non_unknown),
     )
