@@ -36,11 +36,21 @@ class ChainsawMusicDNATests(unittest.TestCase):
         values = report.feature_vector
         self.assertEqual(report.decision.state.value, 'ALLOW', report.decision.reasons)
         self.assertGreaterEqual(values['guitar.downpick_ratio'], 0.55)
+        self.assertGreaterEqual(values['guitar.gallop_rate'], 0.12)
         self.assertGreaterEqual(values['harmony.chromaticity'], 0.30)
         self.assertGreaterEqual(values['harmony.tritone_rate'], 0.08)
         self.assertGreaterEqual(values['drums.double_kick_density'], 0.12)
         self.assertGreaterEqual(values['bass.fill_probability'], 0.08)
         self.assertLessEqual(report.coupling['bass_guitar_lock_rate'], 0.90)
+
+    def test_gallop_cells_keep_explicit_downpick_anchor_semantics(self):
+        host = build_chainsaw_diplomacy()
+        rhythm = host.tracks['RHYTHM_GUITAR'].events
+        hybrid = [
+            e for e in rhythm
+            if e.articulation and 'GALLOP' in e.articulation and 'DOWNPICK' in e.articulation
+        ]
+        self.assertTrue(hybrid)
 
     def test_sections_do_not_all_recycle_the_same_opening_riff_cell(self):
         host = build_chainsaw_diplomacy()
