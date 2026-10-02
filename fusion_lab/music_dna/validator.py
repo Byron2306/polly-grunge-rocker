@@ -49,7 +49,12 @@ def _numeric_riff_metrics(riff_structure: Mapping[str, object] | None) -> dict[s
     if not riff_structure:
         return {}
     result: dict[str, float] = {}
+    gesture_metadata_present = bool(riff_structure.get('gesture_metadata_present', False))
     for key, value in riff_structure.items():
+        if key in {'gesture_metadata_present', 'gesture_by_bar', 'family_by_bar', 'families'}:
+            continue
+        if key in {'gesture_diversity', 'transition_density'} and not gesture_metadata_present:
+            continue
         if isinstance(value, bool):
             continue
         if isinstance(value, (int, float)):
@@ -150,7 +155,7 @@ def build_music_dna_report(
         feature_vector=_feature_mapping(features),
         coupling=dict(coupling),
         hook_score=dict(hook),
-        riff_structure=riff_payload,
         production_truth=production_payload,
         decision=decision,
+        riff_structure=riff_payload,
     )
