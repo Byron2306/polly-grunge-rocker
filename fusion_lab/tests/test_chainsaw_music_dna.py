@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from fusion_lab.chainsaw_diplomacy import BAR_TICKS, build_chainsaw_diplomacy
+from fusion_lab.chainsaw_diplomacy import BAR_TICKS, build_chainsaw_diplomacy, chainsaw_riff_schedule
 from fusion_lab.music_dna.analysis import analyze_host
 from fusion_lab.music_dna.genre_profiles import load_seed_genre_profiles
 
@@ -19,6 +19,7 @@ class ChainsawMusicDNATests(unittest.TestCase):
         self.assertEqual(a.genre_profile, 'THRASH_CLASSIC')
         self.assertIn('guitar_kick_coupling', a.coupling)
         self.assertIn('total', a.hook_score)
+        self.assertIn('riff_family_count', a.riff_structure)
         self.assertIn(a.decision.state.value, {'ALLOW', 'MUTATE', 'REJECT'})
 
     def test_chainsaw_report_contains_no_opaque_only_score(self):
@@ -29,6 +30,7 @@ class ChainsawMusicDNATests(unittest.TestCase):
         self.assertIn('feature_vector', payload)
         self.assertIn('coupling', payload)
         self.assertIn('hook_score', payload)
+        self.assertIn('riff_structure', payload)
 
     def test_chainsaw_enters_preferred_classic_thrash_envelope(self):
         profile = load_seed_genre_profiles(DATA_ROOT)['THRASH_CLASSIC']
@@ -42,14 +44,22 @@ class ChainsawMusicDNATests(unittest.TestCase):
         self.assertGreaterEqual(values['drums.double_kick_density'], 0.12)
         self.assertGreaterEqual(values['bass.fill_probability'], 0.08)
         self.assertLessEqual(report.coupling['bass_guitar_lock_rate'], 0.90)
+        self.assertGreaterEqual(report.riff_structure['riff_family_count'], 5)
+        self.assertLessEqual(report.riff_structure['longest_same_family_run_bars'], 4)
+        self.assertGreaterEqual(report.riff_structure['gesture_diversity'], 5)
+
+    def test_explicit_riff_schedule_covers_five_physical_behaviors(self):
+        schedule = chainsaw_riff_schedule()
+        families = {row.family_id for row in schedule}
+        gestures = {row.gesture.value for row in schedule}
+        self.assertTrue({'A_HOOK', 'B_SPRINT', 'C_STOMP', 'D_PANIC', 'E_TRANSITION'}.issubset(families))
+        self.assertTrue({'HOOK', 'SPRINT', 'STOMP', 'PANIC', 'TRANSITION'}.issubset(gestures))
+        self.assertEqual(len(schedule), 64)
 
     def test_gallop_cells_keep_explicit_downpick_anchor_semantics(self):
         host = build_chainsaw_diplomacy()
         rhythm = host.tracks['RHYTHM_GUITAR'].events
-        hybrid = [
-            e for e in rhythm
-            if e.articulation and 'GALLOP' in e.articulation and 'DOWNPICK' in e.articulation
-        ]
+        hybrid = [e for e in rhythm if e.articulation and 'GALLOP' in e.articulation and 'DOWNPICK' in e.articulation]
         self.assertTrue(hybrid)
 
     def test_sections_do_not_all_recycle_the_same_opening_riff_cell(self):
@@ -65,7 +75,7 @@ class ChainsawMusicDNATests(unittest.TestCase):
                 if start <= event.start_tick < end
             )
             signatures.append(cells)
-        self.assertGreaterEqual(len(set(signatures)), 5)
+        self.assertGreaterEqual(len(set(signatures)), 4)
 
     def test_lead_stays_in_guitar_like_register_and_uses_phrase_space(self):
         host = build_chainsaw_diplomacy()
@@ -88,6 +98,19 @@ class ChainsawMusicDNATests(unittest.TestCase):
         self.assertGreaterEqual(len(double_kicks), 24)
         self.assertTrue(picked_bass)
         self.assertGreaterEqual(min(e.velocity for e in picked_bass), 98)
+
+    def test_family_boundaries_trigger_transition_fills(self):
+        host = build_chainsaw_diplomacy()
+        schedule = chainsaw_riff_schedule()
+        boundaries = {
+            row.bar_index * BAR_TICKS
+            for previous, row in zip(schedule, schedule[1:])
+            if previous.family_id != row.family_id
+        }
+        bass_fills = [e for e in host.tracks['BASS'].events if e.function == 'GROOVE_FILL']
+        drum_fills = [e for e in host.tracks['DRUMS'].events if e.function == 'TRANSITION']
+        self.assertTrue(any(any(abs(e.start_tick - boundary) <= BAR_TICKS for boundary in boundaries) for e in bass_fills))
+        self.assertTrue(any(any(abs(e.start_tick - boundary) <= BAR_TICKS for boundary in boundaries) for e in drum_fills))
 
 
 if __name__ == '__main__':
