@@ -125,7 +125,15 @@ def apply_tone_chain(source:Path,destination:Path,profile:ToneProfile)->None:
             if stage.asset_path and not stage.asset_path.is_file(): raise RuntimeError(f'PRODUCTION_MISSING_TONE_ASSET: {stage.asset_path}')
             out=destination if i==len(profile.stages)-1 else destination.with_suffix(f'.stage{i}.wav')
             args=[a.replace('{in}',str(current)).replace('{out}',str(out)).replace('{asset}',str(stage.asset_path or '')) for a in stage.args]
-            subprocess.run([exe,*args],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            try:
+                subprocess.run([exe,*args],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            except subprocess.CalledProcessError as exc:
+                stdout=(exc.stdout or '').strip()
+                stderr=(exc.stderr or '').strip()
+                raise RuntimeError(
+                    f'PRODUCTION_TONE_STAGE_FAILED: kind={stage.kind}; executable={exe}; '
+                    f'returncode={exc.returncode}; stdout={stdout}; stderr={stderr}'
+                ) from exc
             if current != source and current != destination: temps.append(current)
             current=out
     elif profile.controls is None:
