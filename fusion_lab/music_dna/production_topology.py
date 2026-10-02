@@ -48,7 +48,12 @@ def _cabinet(profile: ToneProfile) -> str | None:
 def _cabinet_processor(profile: ToneProfile) -> str | None:
     for stage in profile.stages:
         if stage.kind == 'plugin_amp_with_cabinet':
-            return 'guitarix:gx_amp:built_in_cabinet'
+            joined = ' '.join(stage.args)
+            if 'run_caps_thr_amp.py' in joined:
+                return 'caps:AmpVTS+CabinetIV'
+            if 'run_guitarix_thr_amp.py' in joined:
+                return 'guitarix:gx_amp:built_in_cabinet'
+            return 'plugin_amp_with_cabinet'
         if stage.kind == 'plugin_cabinet':
             return 'plugin_cabinet'
     return None
