@@ -44,6 +44,7 @@ class ChainsawMusicDNATests(unittest.TestCase):
         self.assertGreaterEqual(values['drums.double_kick_density'], 0.12)
         self.assertGreaterEqual(values['bass.fill_probability'], 0.08)
         self.assertLessEqual(report.coupling['bass_guitar_lock_rate'], 0.90)
+        self.assertGreaterEqual(report.coupling['bass_kick_lock_rate'], 0.45)
         self.assertGreaterEqual(report.riff_structure['riff_family_count'], 5)
         self.assertLessEqual(report.riff_structure['longest_same_family_run_bars'], 4)
         self.assertGreaterEqual(report.riff_structure['gesture_diversity'], 5)
