@@ -38,6 +38,31 @@ require_guitarix() {
   fi
 }
 
+diagnose_articulation_wavs() {
+  echo "--- V5 articulation WAV diagnostics ---" >&2
+  local found=0
+  for side in rhythm_guitar_L rhythm_guitar_R; do
+    local dir="$OUT/articulations/$side"
+    [[ -d "$dir" ]] || continue
+    for wav in "$dir"/*.wav; do
+      [[ -e "$wav" ]] || continue
+      found=1
+      echo "[$side] $(basename "$wav")" >&2
+      ls -lh "$wav" >&2 || true
+      if command -v ffprobe >/dev/null 2>&1; then
+        ffprobe -v error \
+          -show_entries stream=codec_name,sample_rate,channels:format=format_name,duration,size \
+          -of default=noprint_wrappers=1 "$wav" >&2 || \
+          echo "FFPROBE_INVALID_AUDIO: $wav" >&2
+      fi
+    done
+  done
+  if [[ "$found" -eq 0 ]]; then
+    echo "NO_ARTICULATION_WAVS_FOUND" >&2
+  fi
+  echo "--- end diagnostics ---" >&2
+}
+
 case "$ACTION" in
   analyze)
     python -m fusion_lab.music_dna.chainsaw_v5 analyze "${common[@]}"
@@ -45,8 +70,11 @@ case "$ACTION" in
 
   isolated)
     require_guitarix
-    python -m fusion_lab.music_dna.chainsaw_v5 isolated \
-      "${common[@]}" --sample-rate 48000 --sfizz-render sfizz_render
+    if ! python -m fusion_lab.music_dna.chainsaw_v5 isolated \
+      "${common[@]}" --sample-rate 48000 --sfizz-render sfizz_render; then
+      diagnose_articulation_wavs
+      exit 1
+    fi
     if [[ -f "$OUT/CHAINSAW_DIPLOMACY_V5_ISOLATED_GUITARS.wav" ]]; then
       cp "$OUT/CHAINSAW_DIPLOMACY_V5_ISOLATED_GUITARS.wav" \
         "$PHONE/CHAINSAW_DIPLOMACY_V5_ISOLATED_GUITARS.wav"
