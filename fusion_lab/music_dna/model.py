@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from math import isfinite
 from types import MappingProxyType
@@ -100,9 +100,9 @@ class MusicDNAReport:
     feature_vector: Mapping[str, float]
     coupling: Mapping[str, float]
     hook_score: Mapping[str, float]
-    riff_structure: Mapping[str, object]
     production_truth: Mapping[str, object]
     decision: GenreDecision
+    riff_structure: Mapping[str, object] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
