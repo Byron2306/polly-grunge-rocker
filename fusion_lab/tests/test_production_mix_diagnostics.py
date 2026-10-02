@@ -34,6 +34,22 @@ class ProductionMixDiagnosticsTests(unittest.TestCase):
             self.assertIn('mute=', message)
             self.assertIn('sustain=', message)
 
+    def test_mix_creates_destination_parent_before_ffmpeg_runs(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            source = root / 'source.wav'
+            source.write_bytes(b'RIFF')
+            destination = root / 'nested' / 'clean' / 'mix.wav'
+
+            def verify_parent_then_succeed(*args, **kwargs):
+                self.assertTrue(destination.parent.is_dir())
+                return subprocess.CompletedProcess(args[0], 0, '', '')
+
+            with patch('fusion_lab.production_render.shutil.which', return_value='/usr/bin/ffmpeg'), patch(
+                'fusion_lab.production_render.subprocess.run', side_effect=verify_parent_then_succeed
+            ):
+                mix_production_stems({'source': source}, destination)
+
 
 if __name__ == '__main__':
     unittest.main()
