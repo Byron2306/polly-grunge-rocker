@@ -136,7 +136,9 @@ def _riff_c_stomp(base: int, *, prime: bool = False):
 def _riff_d_panic(base: int):
     g = Gesture.PANIC
     rows = []
-    roots = (40, 41, 46, 42, 47, 41, 43, 40)
+    # Repeated semitone motion frames a tritone jump: chromatic tension with a
+    # memorable contour rather than random fret changes around the pedal tone.
+    roots = (40, 41, 46, 47, 41, 42, 43, 40)
     for index, root in enumerate(roots):
         art = 'PALM_MUTE_DOWNPICK' if index in (0, 3, 7) else 'CHROMATIC_POWER_DOWNPICK'
         rows.extend(_root5(root, base + index * TPQ // 2, TPQ // 3, 110 + (index % 3) * 4, art, g))
