@@ -13,6 +13,7 @@ LAYER_ROLE={'rhythm_guitar_L':'RHYTHM_GUITAR','rhythm_guitar_R':'RHYTHM_GUITAR',
 # to the closest installed articulation at the render boundary.
 ARTICULATION_RENDER_ALIASES={
     'PALM_MUTE_GALLOP_DOWNPICK':'PALM_MUTE_GALLOP',
+    'CHROMATIC_POWER_DOWNPICK':'CHROMATIC_POWER',
 }
 
 def _render_articulation(name:str)->str:
@@ -75,9 +76,7 @@ def write_articulation_midis(host:HostComposition,out_dir:Path,layer:str,profile
         art=_render_articulation(semantic_art)
         if art not in instrument.articulations:
             raise ValueError(f'PRODUCTION_UNSUPPORTED_ARTICULATION: {instrument.id}:{semantic_art}')
-        grouped.setdefault(art,[]).append(
-            NoteEvent(e.start_tick,e.duration_ticks,e.note,e.velocity,e.channel,art,e.function)
-        )
+        grouped.setdefault(art,[]).append(NoteEvent(e.start_tick,e.duration_ticks,e.note,e.velocity,e.channel,art,e.function))
     result={}
     for art,events in sorted(grouped.items()):
         track=RoleTrack(source.role,tuple(events),source.program,source.percussion)
