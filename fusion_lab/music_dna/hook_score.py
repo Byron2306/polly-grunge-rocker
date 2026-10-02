@@ -71,6 +71,34 @@ def _rest_pattern(signature: tuple[tuple[int, int, int], ...], bar_ticks: int) -
     return tuple(intervals)
 
 
+def _phrase_end_mutation(signatures: Sequence[tuple]) -> float:
+    """Measure diversity among four-bar phrase endings.
+
+    The old implementation compared only the first and last bars of the
+    entire song.  That made a deliberately evolved outro look maximally
+    mutated even when the internal phrase endings had a healthy recurring
+    vocabulary.  Thrash hooks typically keep a recognisable body while
+    changing turnarounds, so score the ending bar of each four-bar phrase.
+    """
+    nonempty = tuple(sig for sig in signatures if sig)
+    if len(nonempty) < 4:
+        return 0.0
+
+    phrase_ends = tuple(nonempty[i] for i in range(3, len(nonempty), 4))
+    if len(phrase_ends) >= 2:
+        most_common = max(Counter(phrase_ends).values())
+        return 1.0 - most_common / len(phrase_ends)
+
+    # Short fixture/song fallback: compare the final turnaround against the
+    # dominant body bar.  A changed ending represents moderate, not maximal,
+    # phrase mutation.
+    body = nonempty[:-1]
+    if not body:
+        return 0.0
+    reference = Counter(body).most_common(1)[0][0]
+    return 0.5 if nonempty[-1] != reference else 0.0
+
+
 def score_hook(
     events: Sequence[NoteEvent],
     ticks_per_beat: int,
@@ -97,16 +125,7 @@ def score_hook(
     rhythmic_identity = _mode_recurrence(onset_patterns)
     contour_recurrence = _mode_recurrence(tuple(_contour(sig) for sig in nonempty))
     rest_recurrence = _mode_recurrence(tuple(_rest_pattern(sig, bar_ticks) for sig in nonempty))
-
-    phrase_end_mutation = 0.0
-    if len(nonempty) >= 4:
-        reference = nonempty[0]
-        ending = nonempty[-1]
-        if reference != ending:
-            shared_onsets = {x[0] for x in reference} & {x[0] for x in ending}
-            onset_identity = len(shared_onsets) / max(1, len({x[0] for x in reference}))
-            contour_changed = _contour(reference) != _contour(ending)
-            phrase_end_mutation = min(1.0, onset_identity * (1.0 if contour_changed else 0.6))
+    phrase_end_mutation = _phrase_end_mutation(signatures)
 
     loop_penalty = 0.0
     if len(nonempty) >= 8 and len(counts) <= 2:
