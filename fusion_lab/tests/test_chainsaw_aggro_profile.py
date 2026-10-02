@@ -30,6 +30,12 @@ class ChainsawAggroProfileTests(unittest.TestCase):
             self.assertEqual(profiles[layer].stages[0].kind, 'plugin_amp_with_cabinet')
             self.assertIn('scripts/run_caps_thr_amp.py', profiles[layer].stages[0].args)
 
+    def test_lead_uses_separate_less_pingy_amp_mode(self):
+        profiles = load_tone_profiles(TONES)
+        args = profiles['lead_guitar'].stages[0].args
+        self.assertIn('--mode', args)
+        self.assertIn('lead', args)
+
 
 if __name__ == '__main__':
     unittest.main()
