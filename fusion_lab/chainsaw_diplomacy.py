@@ -48,8 +48,8 @@ def _sections() -> tuple[Section, ...]:
 
 
 _SECTION_FAMILIES = {
-    'intro': ('A_HOOK',) * 4,
-    'verse1': ('A_HOOK',) * 4 + ('B_SPRINT',) * 4,
+    'intro': ('A_HOOK', 'A_HOOK', 'A_HOOK', 'E_TRANSITION'),
+    'verse1': ('A_HOOK', 'A_HOOK', 'B_SPRINT', 'B_SPRINT', 'A_HOOK', 'A_HOOK', 'B_SPRINT', 'B_SPRINT'),
     'pre': ('D_PANIC',) * 2 + ('B_SPRINT',) * 2,
     'chorus1': ('A_HOOK',) * 4 + ('C_STOMP',) * 4,
     'verse2': ('B_SPRINT',) * 4 + ('D_PANIC',) * 4,
