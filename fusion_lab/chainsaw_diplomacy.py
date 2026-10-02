@@ -42,7 +42,10 @@ def _riff_for_bar(base:int,variant:int):
         t=base
         for _ in range(3):
             ev += list(_root5(40,t,TPQ//2,106,'PALM_MUTE_DOWNPICK')); t += TPQ//2
-            ev += list(_root5(40,t,TPQ//4,98,'PALM_MUTE_GALLOP')); t += TPQ//4
+            # The first short note of each gallop pair is the accented
+            # downstroke anchor.  Preserve both semantics instead of forcing
+            # GALLOP and DOWNPICK to be mutually exclusive categories.
+            ev += list(_root5(40,t,TPQ//4,100,'PALM_MUTE_GALLOP_DOWNPICK')); t += TPQ//4
             ev += list(_root5(40,t,TPQ//4,101,'PALM_MUTE_GALLOP')); t += TPQ//4
         ev += list(_root5(41,base+3*TPQ,TPQ//2,110,'CHROMATIC_POWER'))
         ev += list(_root5(42,base+3*TPQ+TPQ//2,TPQ//2,112,'CHROMATIC_POWER'))
@@ -104,7 +107,7 @@ def _bass(sections,rhythm):
         if any(start <= tick < end for start,end in fill_windows):
             continue
         root=min(x.note for x in items)
-        vel=102 if any(x.articulation=='PALM_MUTE_DOWNPICK' for x in items) else 98
+        vel=102 if any(x.articulation and 'DOWNPICK' in x.articulation for x in items) else 98
         ev.append(NoteEvent(tick,items[0].duration_ticks,max(28,root-12),vel,1,'PICKED_FOLLOW','GROOVE_ANCHOR'))
     fill_notes=(28,28,31,34,35,34,31,29,28,34,35,28)
     for start,_ in fill_windows:
@@ -116,7 +119,7 @@ def _drums(sections,rhythm):
     ev=[]
     muted_by_bar={}
     for e in rhythm:
-        if e.articulation in {'PALM_MUTE_DOWNPICK','PALM_MUTE_GALLOP'}:
+        if e.articulation and 'PALM_MUTE' in e.articulation:
             muted_by_bar.setdefault(e.start_tick//BAR_TICKS,set()).add(e.start_tick)
     for s in sections:
         for b in range(s.bars):
