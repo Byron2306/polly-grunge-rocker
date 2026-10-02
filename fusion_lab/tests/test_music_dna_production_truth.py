@@ -37,7 +37,17 @@ class ProductionTruthTests(unittest.TestCase):
             ProductionEvidence('real_amp_sim', None, 'L1', 'R1', 'mute', 'sus'),
         )
         self.assertFalse(result.ok)
-        self.assertIn('missing_cabinet_ir', result.reasons)
+        self.assertIn('missing_verified_cabinet', result.reasons)
+
+    def test_verified_cabinet_processor_satisfies_cabinet_truth(self):
+        result = validate_production_truth(
+            self.profile,
+            ProductionEvidence(
+                'plugin_amp', None, 'L1', 'R1', 'mute', 'sus',
+                cabinet_processor='guitarix:gx_amp:built_in_cabinet',
+            ),
+        )
+        self.assertTrue(result.ok)
 
     def test_identical_double_track_ids_are_refused(self):
         result = validate_production_truth(
