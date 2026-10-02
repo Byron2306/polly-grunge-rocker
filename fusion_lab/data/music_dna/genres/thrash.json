@@ -10,6 +10,6 @@
   "vocals":{"features":{"syllable_density":[0.2,0.35,0.75,0.95],"chorus_hook_recurrence":[0.1,0.25,0.7,0.9]}},
   "keys":{"features":{"presence_probability":[0.0,0.0,0.08,0.2]}},
   "arrangement":{"features":{"phrase_end_mutation":[0.2,0.35,0.75,0.95],"section_contrast":[0.2,0.35,0.8,1.0],"solo_probability":[0.2,0.4,0.85,1.0]}},
-  "riff_structure":{"features":{"riff_family_count":[3,5,8,16],"riff_family_recurrence":[0.1,0.15,0.45,0.7],"longest_same_family_run_bars":[1,1,4,8],"section_riff_contrast":[0.15,0.3,0.85,1.0],"transition_density":[0.02,0.05,0.25,0.5],"gesture_diversity":[1,3,6,6]}},
+  "riff_structure":{"features":{"riff_family_count":[3,5,8,16],"riff_family_recurrence":[0.1,0.15,0.45,0.7],"longest_same_family_run_bars":[1,1,4,8],"section_riff_contrast":[0.15,0.3,1.0,1.0],"transition_density":[0.02,0.05,0.25,0.5],"gesture_diversity":[1,3,6,6]}},
   "production":{"features":{"gate_strength":[0.0,0.05,0.35,0.55],"stereo_width":[0.55,0.75,1.0,1.0]},"hard_constraints":[{"id":"amp_distortion_required","required":true},{"id":"cabinet_required","required":true},{"id":"distinct_double_tracks","required":true},{"id":"distinct_palm_mute_envelope","required":true}]}
 }
