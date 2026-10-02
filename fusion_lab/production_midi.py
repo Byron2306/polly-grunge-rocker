@@ -8,6 +8,16 @@ from .production_model import HumanizationProfile, InstrumentProfile
 
 LAYER_ROLE={'rhythm_guitar_L':'RHYTHM_GUITAR','rhythm_guitar_R':'RHYTHM_GUITAR','bass':'BASS','drums':'DRUMS','lead_guitar':'LEAD_KEYS'}
 
+# Music-DNA semantic articulations may carry more information than the physical
+# sampler patch set. Keep that semantic richness in the composition, but map it
+# to the closest installed articulation at the render boundary.
+ARTICULATION_RENDER_ALIASES={
+    'PALM_MUTE_GALLOP_DOWNPICK':'PALM_MUTE_GALLOP',
+}
+
+def _render_articulation(name:str)->str:
+    return ARTICULATION_RENDER_ALIASES.get(name,name)
+
 def _seed_for(profile:HumanizationProfile,layer:str)->int:
     return profile.seed ^ int(hashlib.sha256(layer.encode()).hexdigest()[:8],16)
 
@@ -31,9 +41,10 @@ def _messages(host:HostComposition,track:RoleTrack,instrument:InstrumentProfile)
     events=[(0,0,mido.MetaMessage('set_tempo',tempo=mido.bpm2tempo(host.bpm),time=0)),(0,1,mido.MetaMessage('time_signature',numerator=host.numerator,denominator=host.denominator,time=0))]
     last_art=None
     for e in track.events:
-        art_name=e.articulation or 'SUSTAIN'
+        semantic_art=e.articulation or 'SUSTAIN'
+        art_name=_render_articulation(semantic_art)
         if art_name not in instrument.articulations:
-            raise ValueError(f'PRODUCTION_UNSUPPORTED_ARTICULATION: {instrument.id}:{art_name}')
+            raise ValueError(f'PRODUCTION_UNSUPPORTED_ARTICULATION: {instrument.id}:{semantic_art}')
         art=instrument.articulations[art_name]
         channel=art.midi_channel if art.midi_channel is not None else e.channel
         if art.keyswitch is not None and art_name!=last_art:
@@ -60,10 +71,13 @@ def write_articulation_midis(host:HostComposition,out_dir:Path,layer:str,profile
     humanized=humanize_events(host,source.events,profile,layer)
     grouped={}
     for e in humanized:
-        art=e.articulation or 'SUSTAIN'
+        semantic_art=e.articulation or 'SUSTAIN'
+        art=_render_articulation(semantic_art)
         if art not in instrument.articulations:
-            raise ValueError(f'PRODUCTION_UNSUPPORTED_ARTICULATION: {instrument.id}:{art}')
-        grouped.setdefault(art,[]).append(e)
+            raise ValueError(f'PRODUCTION_UNSUPPORTED_ARTICULATION: {instrument.id}:{semantic_art}')
+        grouped.setdefault(art,[]).append(
+            NoteEvent(e.start_tick,e.duration_ticks,e.note,e.velocity,e.channel,art,e.function)
+        )
     result={}
     for art,events in sorted(grouped.items()):
         track=RoleTrack(source.role,tuple(events),source.program,source.percussion)
