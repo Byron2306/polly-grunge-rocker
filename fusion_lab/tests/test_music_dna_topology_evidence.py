@@ -39,6 +39,24 @@ class TopologyEvidenceTests(unittest.TestCase):
         self.assertNotEqual(evidence.left_performance_id, evidence.right_performance_id)
         self.assertNotEqual(evidence.palm_mute_signature, evidence.sustain_signature)
 
+    def test_caps_amp_wrapper_reports_caps_cabinet_processor(self):
+        stage = ToneStage(
+            'plugin_amp_with_cabinet',
+            executable='python3',
+            args=('scripts/run_caps_thr_amp.py', '--input', '{in}', '--output', '{out}'),
+        )
+        tone = ToneProfile('caps', (stage,), controls=ToneControls(distortion=0.0))
+        inst = InstrumentProfile(
+            'gtr', 'RHYTHM_GUITAR', Path('/tmp/sus.sfz'),
+            {
+                'PALM_MUTE_DOWNPICK': ArticulationMap('PALM_MUTE_DOWNPICK', sfz_path=Path('/tmp/mute.sfz')),
+                'OPEN_RELEASE': ArticulationMap('OPEN_RELEASE', sfz_path=Path('/tmp/sus.sfz')),
+            },
+            'test',
+        )
+        evidence = evidence_from_profiles(tone, tone, inst, inst, seed=1988)
+        self.assertEqual(evidence.cabinet_processor, 'caps:AmpVTS+CabinetIV')
+
 
 if __name__ == '__main__':
     unittest.main()
