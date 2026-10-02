@@ -18,6 +18,7 @@ from .model import (
     KeysDNA,
     ProductionDNA,
     RangeBand,
+    RiffStructureDNA,
     VocalDNA,
 )
 
@@ -51,6 +52,15 @@ def _component(name: str, raw: dict) -> DNAComponent:
     return _COMPONENTS[name](features=features, hard_constraints=constraints)
 
 
+def _riff_structure(raw: object) -> RiffStructureDNA | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict) or 'features' not in raw:
+        raise ValueError('invalid riff_structure component')
+    features = {key: _band(value) for key, value in raw['features'].items()}
+    return RiffStructureDNA(features=features)
+
+
 def load_genre_profile(path: Path) -> GenreDNA:
     raw = json.loads(Path(path).read_text())
     required = {'id', 'tempo', 'meters', *_COMPONENTS.keys()}
@@ -64,6 +74,7 @@ def load_genre_profile(path: Path) -> GenreDNA:
         id=str(raw['id']),
         tempo=_band(raw['tempo']),
         meters=meters,
+        riff_structure=_riff_structure(raw.get('riff_structure')),
         **{name: _component(name, raw[name]) for name in _COMPONENTS},
     )
 
