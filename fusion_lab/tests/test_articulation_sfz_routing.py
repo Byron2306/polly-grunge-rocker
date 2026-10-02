@@ -12,6 +12,7 @@ from fusion_lab.production_model import ArticulationMap, HumanizationProfile, In
 class ArticulationSfzRoutingTests(unittest.TestCase):
     def test_rhythm_guitar_is_split_by_authored_articulation(self):
         host = build_chainsaw_diplomacy()
+        self.assertTrue(any(e.articulation == 'PALM_MUTE_GALLOP_DOWNPICK' for e in host.tracks['RHYTHM_GUITAR'].events))
         arts = {
             name: ArticulationMap(name, sfz_path=Path(f'/tmp/{name}.sfz'))
             for name in (
@@ -30,7 +31,11 @@ class ArticulationSfzRoutingTests(unittest.TestCase):
                 HumanizationProfile(1988, 2, 4, 7, 8),
                 inst,
             )
+            # Semantic PALM_MUTE_GALLOP_DOWNPICK is intentionally rendered
+            # through the installed PALM_MUTE_GALLOP patch, so no fake fifth
+            # sampler articulation is required.
             self.assertEqual(set(result), set(arts))
+            self.assertNotIn('PALM_MUTE_GALLOP_DOWNPICK', result)
             for art, path in result.items():
                 self.assertTrue(path.is_file())
                 notes = [
