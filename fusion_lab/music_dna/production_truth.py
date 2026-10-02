@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 
 from .model import ProductionDNA
 
 
-REAL_AMP_KINDS = {'real_amp_sim', 'external_amp', 'plugin_amp', 'captured_amp'}
+REAL_AMP_KINDS = {
+    'real_amp_sim',
+    'external_amp',
+    'plugin_amp',
+    'plugin_amp_with_cabinet',
+    'captured_amp',
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,6 +22,7 @@ class ProductionEvidence:
     right_performance_id: str | None
     palm_mute_signature: str | None
     sustain_signature: str | None
+    cabinet_processor: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,8 +43,8 @@ def validate_production_truth(profile: ProductionDNA, evidence: ProductionEviden
             reasons.append('missing_verified_amp_distortion')
 
     if required.get('cabinet_required'):
-        if not evidence.cabinet_ir:
-            reasons.append('missing_cabinet_ir')
+        if not evidence.cabinet_ir and not evidence.cabinet_processor:
+            reasons.append('missing_verified_cabinet')
 
     if required.get('distinct_double_tracks'):
         if not evidence.left_performance_id or not evidence.right_performance_id:
