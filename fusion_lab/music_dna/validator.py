@@ -26,6 +26,9 @@ def _flatten_profile(profile: GenreDNA) -> dict[str, RangeBand]:
     ):
         for name, band in component.features.items():
             result[f'{prefix}.{name}'] = band
+    if profile.riff_structure is not None:
+        for name, band in profile.riff_structure.features.items():
+            result[f'riff_structure.{name}'] = band
     for alias, target in _COUPLING_ALIASES.items():
         if target in result:
             result[alias] = result[target]
@@ -42,10 +45,23 @@ def _feature_mapping(features: FeatureVector | Mapping[str, float]) -> dict[str,
     return {str(key): float(value) for key, value in features.items()}
 
 
+def _numeric_riff_metrics(riff_structure: Mapping[str, object] | None) -> dict[str, float]:
+    if not riff_structure:
+        return {}
+    result: dict[str, float] = {}
+    for key, value in riff_structure.items():
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float)):
+            result[str(key)] = float(value)
+    return result
+
+
 def _merge_validation_inputs(
     features: FeatureVector | Mapping[str, float],
     coupling: Mapping[str, float] | None,
     hook: Mapping[str, float] | None,
+    riff_structure: Mapping[str, object] | None = None,
 ) -> dict[str, float]:
     merged = _feature_mapping(features)
     if coupling:
@@ -56,6 +72,8 @@ def _merge_validation_inputs(
             merged['arrangement.phrase_end_mutation'] = float(hook['phrase_end_mutation'])
         if 'recurrence' in hook:
             merged['guitar.hook_recurrence'] = float(hook['recurrence'])
+    for key, value in _numeric_riff_metrics(riff_structure).items():
+        merged[f'riff_structure.{key}'] = value
     return merged
 
 
@@ -65,9 +83,10 @@ def validate_genre(
     coupling: Mapping[str, float] | None = None,
     hook: Mapping[str, float] | None = None,
     production_truth=None,
+    riff_structure: Mapping[str, object] | None = None,
 ) -> GenreDecision:
     bands = _flatten_profile(profile)
-    merged = _merge_validation_inputs(features, coupling, hook)
+    merged = _merge_validation_inputs(features, coupling, hook, riff_structure)
     reasons: list[str] = []
     distances: list[float] = []
     hard_failure = False
@@ -108,8 +127,17 @@ def build_music_dna_report(
     coupling: Mapping[str, float],
     hook: Mapping[str, float],
     production_truth=None,
+    riff_structure: Mapping[str, object] | None = None,
 ) -> MusicDNAReport:
-    decision = validate_genre(profile, features, coupling, hook, production_truth)
+    riff_payload = dict(riff_structure or {})
+    decision = validate_genre(
+        profile,
+        features,
+        coupling,
+        hook,
+        production_truth,
+        riff_structure=riff_payload,
+    )
     production_payload = {}
     if production_truth is not None:
         production_payload = (
@@ -122,6 +150,7 @@ def build_music_dna_report(
         feature_vector=_feature_mapping(features),
         coupling=dict(coupling),
         hook_score=dict(hook),
+        riff_structure=riff_payload,
         production_truth=production_payload,
         decision=decision,
     )
