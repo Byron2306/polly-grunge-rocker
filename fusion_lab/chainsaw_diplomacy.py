@@ -221,6 +221,11 @@ def _drums(schedule: tuple[RiffBarPlan, ...]):
         gesture = plan.gesture
         if plan.bar_index in boundaries or plan.bar_index in section_starts:
             events.append(NoteEvent(base, TPQ // 6, 49, 127, 9, 'CRASH', 'ACCENT'))
+        if plan.bar_index in boundaries:
+            fill_start = base - TPQ
+            if fill_start >= 0:
+                events.append(NoteEvent(fill_start + TPQ // 6, TPQ // 10, 36, 118, 9, 'DOUBLE_KICK_ESCALATION', 'TRANSITION_COUPLING'))
+                events.append(NoteEvent(fill_start + 2 * TPQ // 6, TPQ // 10, 36, 116, 9, 'DOUBLE_KICK_ESCALATION', 'TRANSITION_COUPLING'))
 
         if gesture == Gesture.STOMP:
             for beat in range(4):
