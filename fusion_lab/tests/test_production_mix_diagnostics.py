@@ -4,7 +4,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from fusion_lab.production_render import mix_production_stems
+from fusion_lab.production_model import ToneControls, ToneProfile, ToneStage
+from fusion_lab.production_render import apply_tone_chain, mix_production_stems
 
 
 class ProductionMixDiagnosticsTests(unittest.TestCase):
@@ -49,6 +50,38 @@ class ProductionMixDiagnosticsTests(unittest.TestCase):
                 'fusion_lab.production_render.subprocess.run', side_effect=verify_parent_then_succeed
             ):
                 mix_production_stems({'source': source}, destination)
+
+    def test_external_tone_stage_failure_surfaces_child_stderr(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            source = root / 'source.wav'
+            source.write_bytes(b'RIFF')
+            destination = root / 'tone.wav'
+            profile = ToneProfile(
+                'guitar',
+                (ToneStage('plugin_amp_with_cabinet', executable='python3', args=('amp.py', '{in}', '{out}')),),
+                controls=ToneControls(),
+            )
+
+            calls = {'count': 0}
+
+            def run_side_effect(cmd, **kwargs):
+                calls['count'] += 1
+                if calls['count'] == 1:
+                    return subprocess.CompletedProcess(cmd, 0, '', '')
+                raise subprocess.CalledProcessError(1, cmd, stdout='wrapper stdout', stderr='FUSION_GUITARIX_LV2_FAILED: bad port')
+
+            with patch('fusion_lab.production_render.shutil.which', side_effect=lambda name: f'/usr/bin/{name}'), patch(
+                'fusion_lab.production_render.subprocess.run', side_effect=run_side_effect
+            ):
+                with self.assertRaises(RuntimeError) as ctx:
+                    apply_tone_chain(source, destination, profile)
+
+            message = str(ctx.exception)
+            self.assertIn('PRODUCTION_TONE_STAGE_FAILED', message)
+            self.assertIn('plugin_amp_with_cabinet', message)
+            self.assertIn('FUSION_GUITARIX_LV2_FAILED: bad port', message)
+            self.assertIn('wrapper stdout', message)
 
 
 if __name__ == '__main__':
