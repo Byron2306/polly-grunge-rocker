@@ -55,13 +55,28 @@ class GenreProfileRiffStructureTests(unittest.TestCase):
             'section_riff_contrast': 0.08,
             'transition_density': 0.02,
             'gesture_diversity': 1,
+            'gesture_metadata_present': True,
         }
         black_decision = validate_genre(black, {}, riff_structure=structure)
         thrash_decision = validate_genre(thrash, {}, riff_structure=structure)
         self.assertNotEqual(black_decision.state.value, 'REJECT')
-        self.assertNotEqual(black_decision.state.value, 'REJECT')
         self.assertIn(thrash_decision.state.value, {'MUTATE', 'REJECT'})
         self.assertTrue(any('riff_family' in reason or 'longest_same_family' in reason for reason in thrash_decision.reasons))
+
+    def test_missing_legacy_gesture_metadata_adds_no_gesture_reason(self):
+        thrash = load_seed_genre_profiles(DATA_ROOT)['THRASH_CLASSIC']
+        structure = {
+            'riff_family_count': 5,
+            'riff_family_recurrence': 0.30,
+            'longest_same_family_run_bars': 4,
+            'section_riff_contrast': 0.45,
+            'transition_density': 0.0,
+            'gesture_diversity': 0,
+            'gesture_metadata_present': False,
+        }
+        decision = validate_genre(thrash, {}, riff_structure=structure)
+        self.assertFalse(any('gesture_diversity' in reason for reason in decision.reasons))
+        self.assertFalse(any('transition_density' in reason for reason in decision.reasons))
 
 
 if __name__ == '__main__':
