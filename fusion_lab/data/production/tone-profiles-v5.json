@@ -1,6 +1,6 @@
 {
   "schema":"polly.fusion-lab.tone-profiles.v2",
-  "profile_family":"THRASH_1988_V5_CAPS",
+  "profile_family":"THRASH_1988_V5_CAPS_AGGRO",
   "layers":{
     "rhythm_guitar_L":{
       "id":"THRASH_1988_V5_GTR_L","pan":-0.92,"width":1.0,
@@ -13,12 +13,14 @@
       "stages":[{"kind":"plugin_amp_with_cabinet","executable":"python3","args":["scripts/run_caps_thr_amp.py","--input","{in}","--output","{out}"]}]
     },
     "bass":{
-      "id":"THRASH_1988_V5_BASS","pan":0.0,"width":1.0,
-      "controls":{"tuning_profile":"E_STANDARD","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":1.0,"amp_gain":3.8,"distortion":2.4,"bass":6.2,"mid":5.8,"treble":4.0,"presence":3.5,"master":4.5,"reverb_mix":0.0,"reverb_decay_s":0.0,"reverb_predelay_ms":0},"stages":[]
+      "id":"THRASH_1988_V5_BASS_AGGRO","pan":0.0,"width":1.0,
+      "controls":{"tuning_profile":"E_STANDARD","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":0.0,"amp_gain":0.0,"distortion":0.0,"bass":5.0,"mid":5.0,"treble":5.0,"presence":5.0,"master":5.0,"reverb_mix":0.0,"reverb_decay_s":0.0,"reverb_predelay_ms":0},
+      "stages":[{"kind":"bass_aggro_processor","executable":"python3","args":["scripts/run_thr_bass.py","--input","{in}","--output","{out}"]}]
     },
     "drums":{
-      "id":"THRASH_1988_V5_DRUMS","pan":0.0,"width":1.0,
-      "controls":{"tuning_profile":"NATIVE","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":0.0,"amp_gain":0.0,"distortion":0.0,"bass":5.2,"mid":4.8,"treble":5.7,"presence":5.4,"master":4.0,"reverb_mix":0.045,"reverb_decay_s":0.45,"reverb_predelay_ms":8},"stages":[]
+      "id":"THRASH_1988_V5_DRUMS_AGGRO","pan":0.0,"width":1.0,
+      "controls":{"tuning_profile":"NATIVE","pitch_shift_semitones":0,"boost_drive":0.0,"boost_level":0.0,"amp_gain":0.0,"distortion":0.0,"bass":5.0,"mid":5.0,"treble":5.0,"presence":5.0,"master":5.0,"reverb_mix":0.015,"reverb_decay_s":0.20,"reverb_predelay_ms":4},
+      "stages":[{"kind":"drum_aggro_processor","executable":"python3","args":["scripts/run_thr_drums.py","--input","{in}","--output","{out}"]}]
     },
     "lead_guitar":{
       "id":"THRASH_1988_V5_LEAD","pan":0.08,"width":1.0,
