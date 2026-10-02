@@ -33,7 +33,7 @@
       "id":"salamander-original","role":"DRUMS",
       "sfz_path":"${FUSION_INSTRUMENT_ROOT}/drums/Salamander/Salamander Drumkit.sfz",
       "source_id":"Salamander-Drumkit","source_version":"original",
-      "articulations":{"THRASH_SKANK":{},"THRASH_KICK":{},"CHORUS_BACKBEAT":{},"DOUBLE_KICK_ESCALATION":{},"THRASH_HALF_TIME":{},"RIDE":{},"TOM_FILL":{}}
+      "articulations":{"CRASH":{},"THRASH_SKANK":{},"THRASH_KICK":{},"CHORUS_BACKBEAT":{},"DOUBLE_KICK_ESCALATION":{},"THRASH_HALF_TIME":{},"RIDE":{},"TOM_FILL":{}}
     },
     "lead_guitar":{
       "id":"metal-gtx-lead-v5","role":"LEAD_KEYS",
