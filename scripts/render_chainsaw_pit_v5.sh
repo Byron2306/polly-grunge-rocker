@@ -10,7 +10,7 @@ PROFILES="$ROOT/fusion_lab/data/music_dna/genres"
 OUT="$ROOT/fusion_lab/out/host-003-pit-v5"
 PHONE="$HOME/storage/downloads/ChainsawTest"
 ACTION="${1:-isolated}"
-AMP_URI='http://guitarix.sourceforge.net/plugins/gx_amp#GUITARIX'
+CAPS_SO='/usr/lib/ladspa/caps.so'
 
 cd "$ROOT"
 mkdir -p "$OUT" "$PHONE"
@@ -23,18 +23,24 @@ common=(
   --seed 1988
 )
 
-require_guitarix() {
-  if ! command -v lv2file >/dev/null 2>&1; then
-    echo "V5 REFUSE: lv2file is not installed" >&2
+require_caps() {
+  if ! command -v ffmpeg >/dev/null 2>&1; then
+    echo "V5 REFUSE: ffmpeg is not installed" >&2
     exit 2
   fi
-  if ! command -v lv2ls >/dev/null 2>&1; then
-    echo "V5 REFUSE: lv2ls is not installed" >&2
+  if [[ ! -f "$CAPS_SO" ]]; then
+    echo "V5 REFUSE: CAPS LADSPA plugin is not installed: $CAPS_SO" >&2
     exit 2
   fi
-  if ! lv2ls | grep -Fxq "$AMP_URI"; then
-    echo "V5 REFUSE: Guitarix amp LV2 plugin is not installed: $AMP_URI" >&2
-    exit 2
+  if command -v analyseplugin >/dev/null 2>&1; then
+    if ! analyseplugin "$CAPS_SO" AmpVTS 2>/dev/null | grep -Fq 'Plugin Label: "AmpVTS"'; then
+      echo "V5 REFUSE: CAPS AmpVTS plugin is unavailable" >&2
+      exit 2
+    fi
+    if ! analyseplugin "$CAPS_SO" CabinetIV 2>/dev/null | grep -Fq 'Plugin Label: "CabinetIV"'; then
+      echo "V5 REFUSE: CAPS CabinetIV plugin is unavailable" >&2
+      exit 2
+    fi
   fi
 }
 
@@ -69,7 +75,7 @@ case "$ACTION" in
     ;;
 
   isolated)
-    require_guitarix
+    require_caps
     if ! python -m fusion_lab.music_dna.chainsaw_v5 isolated \
       "${common[@]}" --sample-rate 48000 --sfizz-render sfizz_render; then
       diagnose_articulation_wavs
@@ -99,7 +105,7 @@ case "$ACTION" in
     ;;
 
   full)
-    require_guitarix
+    require_caps
     python -m fusion_lab.music_dna.chainsaw_v5 full \
       "${common[@]}" --gate "$OUT/v5-gate.json" \
       --sample-rate 48000 --sfizz-render sfizz_render
