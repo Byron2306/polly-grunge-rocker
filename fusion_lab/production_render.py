@@ -147,6 +147,8 @@ def mix_production_stems(stems:Mapping[str,Path],mix_path:Path)->None:
         if not Path(path).is_file(): raise RuntimeError(f'PRODUCTION_MISSING_STEM: {name}')
     ffmpeg=shutil.which('ffmpeg')
     if ffmpeg is None: raise RuntimeError('PRODUCTION_MISSING_MIXER: ffmpeg')
+    mix_path=Path(mix_path)
+    mix_path.parent.mkdir(parents=True,exist_ok=True)
     cmd=[ffmpeg,'-y']
     for path in stems.values(): cmd += ['-i',str(path)]
     cmd += ['-filter_complex',f'amix=inputs={len(stems)}:normalize=0','-c:a','pcm_s16le',str(mix_path)]
