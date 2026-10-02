@@ -70,16 +70,17 @@ def _riff_for_bar(base:int,variant:int):
 
 # Each section preserves the core headbang motif but mutates the order of its
 # cells.  This keeps hook recognition while preventing every section from
-# reopening with the same four-bar sentence.
+# reopening with the same four-bar sentence.  Gallop cell 1 recurs often
+# enough to remain part of the song's thrash identity without dominating it.
 _SECTION_VARIANTS={
     'intro':(0,1,2,4),
     'verse1':(0,1,3,4,2,1,0,3),
-    'pre':(1,4,3,4),
-    'chorus1':(4,2,0,4,3,1,4,2),
+    'pre':(1,4,3,1),
+    'chorus1':(4,2,1,4,3,1,4,2),
     'verse2':(2,1,4,3,0,2,3,4),
     'chorus2':(4,0,3,4,2,4,1,3),
     'solo':(1,2,4,3,1,4,2,3),
-    'bridge':(3,4,2,3),
+    'bridge':(3,1,2,3),
     'final_chorus':(4,2,3,4,0,4,1,3),
     'outro':(2,4,3,4),
 }
@@ -103,8 +104,6 @@ def _bass(sections,rhythm):
         if any(start <= tick < end for start,end in fill_windows):
             continue
         root=min(x.note for x in items)
-        # Picked thrash bass needs enough velocity to create audible pick/grind
-        # above the guitars rather than existing only as sub-weight.
         vel=102 if any(x.articulation=='PALM_MUTE_DOWNPICK' for x in items) else 98
         ev.append(NoteEvent(tick,items[0].duration_ticks,max(28,root-12),vel,1,'PICKED_FOLLOW','GROOVE_ANCHOR'))
     fill_notes=(28,28,31,34,35,34,31,29,28,34,35,28)
@@ -122,14 +121,12 @@ def _drums(sections,rhythm):
     for s in sections:
         for b in range(s.bars):
             bar_no=s.start_bar+b; base=bar_no*BAR_TICKS; bridge=s.id=='bridge'; chorus='chorus' in s.id
-            # Section starts announce themselves instead of politely arriving.
             if b==0:
                 ev.append(NoteEvent(base,TPQ//6,49,126,9,'CRASH','ACCENT'))
             if bridge:
                 for beat in (0,2): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,36,122,9,'THRASH_HALF_TIME','PROPULSION'))
                 ev.append(NoteEvent(base+2*TPQ,TPQ//8,38,127,9,'THRASH_HALF_TIME','BACKBEAT'))
                 for beat in range(4): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,51,94+(beat%2)*4,9,'RIDE','TIME'))
-                # Bridge turnaround: short double-kick burst into the next bar.
                 if b%2==1:
                     for step in (0,1,2):
                         ev.append(NoteEvent(base+3*TPQ+step*TPQ//4,TPQ//10,36,116+step*3,9,'DOUBLE_KICK_ESCALATION','PROPULSION'))
@@ -142,9 +139,6 @@ def _drums(sections,rhythm):
                 kick_ticks=set(range(base,base+BAR_TICKS,kick_step))
                 missed=[t for t in sorted(muted_by_bar.get(bar_no,())) if t not in kick_ticks]
                 kick_ticks.update(t for i,t in enumerate(missed) if i%2==0)
-                # Every other bar gets a compact sixteenth-note kick burst.  It
-                # adds violence without turning the entire song into constant
-                # modern double-bass carpeting.
                 if b%2==1 and s.id not in {'intro','outro'}:
                     kick_ticks.update((base+3*TPQ,base+3*TPQ+TPQ//4,base+3*TPQ+TPQ//2))
                 for t in sorted(kick_ticks):
@@ -157,16 +151,11 @@ def _drums(sections,rhythm):
 
 def _lead(sections):
     s=next(x for x in sections if x.id=='solo'); start=s.start_bar*BAR_TICKS; ev=[]
-    # Keep the lead in a believable upper-guitar register and phrase it in
-    # calls/responses.  Long notes and rests give the sampler room to sound
-    # like a guitar instead of a high-register MIDI xylophone.
     ev.append(NoteEvent(start,TPQ*2,64,108,3,'LEAD_SUSTAIN','MELODIC_LEAD'))
     ev.append(NoteEvent(start+TPQ*3,TPQ,67,112,3,'LEAD_VIBRATO','MELODIC_LEAD'))
     run1=(64,67,69,70,72,70,69,67); run_start=start+BAR_TICKS*2
     for i,n in enumerate(run1):
-        ev.append(NoteEvent(run_start+i*TPQ//4,TPQ//4, n,104+(i%3)*4,3,'LEAD_FAST_RUN','MELODIC_LEAD'))
-    # Answer with a chromatic/tritone-flavoured lick rather than repeating the
-    # same scalar ascent.
+        ev.append(NoteEvent(run_start+i*TPQ//4,TPQ//4,n,104+(i%3)*4,3,'LEAD_FAST_RUN','MELODIC_LEAD'))
     answer_start=start+BAR_TICKS*4
     run2=(70,71,70,67,64,70,73,72)
     for i,n in enumerate(run2):
