@@ -14,6 +14,7 @@ class ExecutedToneEvidence:
     executed_stages: tuple[str, ...]
     amp_stage_kind: str | None
     cabinet_ir: str | None
+    cabinet_processor: str | None
     output_path: str
 
     def to_dict(self) -> dict:
@@ -21,6 +22,7 @@ class ExecutedToneEvidence:
             'executed_stages': list(self.executed_stages),
             'amp_stage_kind': self.amp_stage_kind,
             'cabinet_ir': self.cabinet_ir,
+            'cabinet_processor': self.cabinet_processor,
             'output_path': self.output_path,
         }
 
@@ -40,6 +42,15 @@ def _cabinet(profile: ToneProfile) -> str | None:
     for stage in profile.stages:
         if stage.asset_path is not None and stage.kind in {'cabinet_ir', *REAL_AMP_KINDS}:
             return str(stage.asset_path)
+    return None
+
+
+def _cabinet_processor(profile: ToneProfile) -> str | None:
+    for stage in profile.stages:
+        if stage.kind == 'plugin_amp_with_cabinet':
+            return 'guitarix:gx_amp:built_in_cabinet'
+        if stage.kind == 'plugin_cabinet':
+            return 'plugin_cabinet'
     return None
 
 
@@ -69,6 +80,10 @@ def evidence_from_profiles(
     right_cab = _cabinet(right_tone)
     cabinet = left_cab if left_cab == right_cab else None
 
+    left_cab_processor = _cabinet_processor(left_tone)
+    right_cab_processor = _cabinet_processor(right_tone)
+    cabinet_processor = left_cab_processor if left_cab_processor == right_cab_processor else None
+
     palm = _articulation_signature(
         left_instrument,
         ('PALM_MUTE_DOWNPICK', 'PALM_MUTE_GALLOP', 'PALM_MUTE'),
@@ -85,6 +100,7 @@ def evidence_from_profiles(
         right_performance_id=f'{right_instrument.id}:R:{seed}:timing4:velocity9',
         palm_mute_signature=palm,
         sustain_signature=sustain,
+        cabinet_processor=cabinet_processor,
     )
 
 
@@ -114,5 +130,6 @@ def execute_tone_chain_with_evidence(source: Path, destination: Path, profile: T
         executed_stages=tuple(stages),
         amp_stage_kind=_amp_kind(profile),
         cabinet_ir=_cabinet(profile),
+        cabinet_processor=_cabinet_processor(profile),
         output_path=str(destination),
     )
