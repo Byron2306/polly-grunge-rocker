@@ -10,5 +10,6 @@
   "vocals":{"features":{"syllable_density":[0.15,0.25,0.7,0.95],"chorus_hook_recurrence":[0.0,0.05,0.4,0.7]}},
   "keys":{"features":{"presence_probability":[0.0,0.05,0.6,0.95]}},
   "arrangement":{"features":{"phrase_end_mutation":[0.1,0.2,0.65,0.9],"section_contrast":[0.2,0.35,0.85,1.0],"solo_probability":[0.0,0.05,0.35,0.65]}},
+  "riff_structure":{"features":{"riff_family_count":[1,1,6,12],"riff_family_recurrence":[0.2,0.45,1.0,1.0],"longest_same_family_run_bars":[1,4,16,32],"section_riff_contrast":[0.0,0.05,0.7,1.0],"transition_density":[0.0,0.0,0.12,0.3],"gesture_diversity":[1,1,4,6]}},
   "production":{"features":{"gate_strength":[0.0,0.0,0.2,0.4],"stereo_width":[0.35,0.55,0.95,1.0]},"hard_constraints":[{"id":"amp_distortion_required","required":true},{"id":"distinct_double_tracks","required":true}]}
 }
