@@ -52,7 +52,7 @@ class MixTruthTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "PRODUCTION_MISSING_MIX_LEVEL"):
                 mix_with_levels({"g": p}, root / "mix.wav", levels={})
 
-    def test_thrash_calibration_recovers_quiet_drums_without_strangling_bass(self):
+    def test_thrash_calibration_recovers_quiet_drums_and_keeps_bass_forward(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             peaks = {
@@ -71,11 +71,11 @@ class MixTruthTests(unittest.TestCase):
             levels, evidence = calibrate_thrash_mix_levels(stems)
 
             self.assertGreater(levels['drums'], 10.0)
-            self.assertGreater(levels['bass'], 0.5)
-            self.assertLess(levels['bass'], 1.0)
+            self.assertGreater(levels['bass'], 0.8)
             self.assertLess(levels['lead_guitar'], 0.8)
-            self.assertAlmostEqual(evidence['drums']['target_peak_dbfs'], -14.0)
-            self.assertAlmostEqual(evidence['bass']['target_peak_dbfs'], -16.0)
+            self.assertAlmostEqual(evidence['drums']['target_peak_dbfs'], -12.5)
+            self.assertAlmostEqual(evidence['bass']['target_peak_dbfs'], -13.5)
+            self.assertAlmostEqual(evidence['rhythm_guitar_L']['target_peak_dbfs'], -16.0)
             for name, row in evidence.items():
                 achieved = row['source_peak_dbfs'] + 20.0 * math.log10(row['gain'])
                 self.assertAlmostEqual(achieved, row['target_peak_dbfs'], delta=0.15, msg=name)
