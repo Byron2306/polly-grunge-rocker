@@ -68,16 +68,28 @@ def _riff_for_bar(base:int,variant:int):
         ev += list(_root5(40,base+3*TPQ+3*TPQ//4,TPQ//4,120,'OPEN_RELEASE'))
     return ev
 
+# Each section preserves the core headbang motif but mutates the order of its
+# cells.  This keeps hook recognition while preventing every section from
+# reopening with the same four-bar sentence.
+_SECTION_VARIANTS={
+    'intro':(0,1,2,4),
+    'verse1':(0,1,3,4,2,1,0,3),
+    'pre':(1,4,3,4),
+    'chorus1':(4,2,0,4,3,1,4,2),
+    'verse2':(2,1,4,3,0,2,3,4),
+    'chorus2':(4,0,3,4,2,4,1,3),
+    'solo':(1,2,4,3,1,4,2,3),
+    'bridge':(3,4,2,3),
+    'final_chorus':(4,2,3,4,0,4,1,3),
+    'outro':(2,4,3,4),
+}
+
 def _rhythm(sections):
     ev=[]
     for s in sections:
+        pattern=_SECTION_VARIANTS[s.id]
         for i in range(s.bars):
-            phrase_pos=i%4; phrase_index=i//4
-            if phrase_pos==0: variant=0
-            elif phrase_pos==1: variant=1
-            elif phrase_pos==2: variant=2 if phrase_index%2 else 0
-            else: variant=3 if phrase_index%2==0 else 4
-            ev.extend(_riff_for_bar((s.start_bar+i)*BAR_TICKS,variant))
+            ev.extend(_riff_for_bar((s.start_bar+i)*BAR_TICKS,pattern[i%len(pattern)]))
     return tuple(sorted(ev,key=lambda e:(e.start_tick,e.note,e.duration_ticks)))
 
 def _bass(sections,rhythm):
@@ -91,11 +103,14 @@ def _bass(sections,rhythm):
         if any(start <= tick < end for start,end in fill_windows):
             continue
         root=min(x.note for x in items)
-        ev.append(NoteEvent(tick,items[0].duration_ticks,max(28,root-12),88,1,'PICKED_FOLLOW','GROOVE_ANCHOR'))
+        # Picked thrash bass needs enough velocity to create audible pick/grind
+        # above the guitars rather than existing only as sub-weight.
+        vel=102 if any(x.articulation=='PALM_MUTE_DOWNPICK' for x in items) else 98
+        ev.append(NoteEvent(tick,items[0].duration_ticks,max(28,root-12),vel,1,'PICKED_FOLLOW','GROOVE_ANCHOR'))
     fill_notes=(28,28,31,34,35,34,31,29,28,34,35,28)
     for start,_ in fill_windows:
         for i,note in enumerate(fill_notes):
-            ev.append(NoteEvent(start+i*(TPQ//6),TPQ//8,note,86+(i%4)*3,1,'PHRASE_END_FILL','GROOVE_FILL'))
+            ev.append(NoteEvent(start+i*(TPQ//6),TPQ//8,note,100+(i%4)*4,1,'PHRASE_END_FILL','GROOVE_FILL'))
     return tuple(sorted(ev,key=lambda e:(e.start_tick,e.note)))
 
 def _drums(sections,rhythm):
@@ -107,33 +122,57 @@ def _drums(sections,rhythm):
     for s in sections:
         for b in range(s.bars):
             bar_no=s.start_bar+b; base=bar_no*BAR_TICKS; bridge=s.id=='bridge'; chorus='chorus' in s.id
+            # Section starts announce themselves instead of politely arriving.
+            if b==0:
+                ev.append(NoteEvent(base,TPQ//6,49,126,9,'CRASH','ACCENT'))
             if bridge:
-                for beat in (0,2): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,36,112,9,'THRASH_HALF_TIME','PROPULSION'))
-                ev.append(NoteEvent(base+2*TPQ,TPQ//8,38,118,9,'THRASH_HALF_TIME','BACKBEAT'))
-                for beat in range(4): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,51,78,9,'RIDE','TIME'))
+                for beat in (0,2): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,36,122,9,'THRASH_HALF_TIME','PROPULSION'))
+                ev.append(NoteEvent(base+2*TPQ,TPQ//8,38,127,9,'THRASH_HALF_TIME','BACKBEAT'))
+                for beat in range(4): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,51,94+(beat%2)*4,9,'RIDE','TIME'))
+                # Bridge turnaround: short double-kick burst into the next bar.
+                if b%2==1:
+                    for step in (0,1,2):
+                        ev.append(NoteEvent(base+3*TPQ+step*TPQ//4,TPQ//10,36,116+step*3,9,'DOUBLE_KICK_ESCALATION','PROPULSION'))
             else:
-                for eighth in range(8): ev.append(NoteEvent(base+eighth*TPQ//2,TPQ//8,42 if not chorus else 51,74+(eighth%3)*3,9,'THRASH_SKANK','TIME'))
-                for beat in (1,3): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,38,116,9,'CHORUS_BACKBEAT' if chorus else 'THRASH_SKANK','BACKBEAT'))
+                for eighth in range(8):
+                    cym=51 if chorus or s.id in {'pre','solo'} else 42
+                    ev.append(NoteEvent(base+eighth*TPQ//2,TPQ//8,cym,90+(eighth%3)*4,9,'THRASH_SKANK','TIME'))
+                for beat in (1,3): ev.append(NoteEvent(base+beat*TPQ,TPQ//8,38,126 if chorus else 123,9,'CHORUS_BACKBEAT' if chorus else 'THRASH_SKANK','BACKBEAT'))
                 kick_step=TPQ//2 if s.id in {'pre','solo'} else TPQ
                 kick_ticks=set(range(base,base+BAR_TICKS,kick_step))
                 missed=[t for t in sorted(muted_by_bar.get(bar_no,())) if t not in kick_ticks]
                 kick_ticks.update(t for i,t in enumerate(missed) if i%2==0)
+                # Every other bar gets a compact sixteenth-note kick burst.  It
+                # adds violence without turning the entire song into constant
+                # modern double-bass carpeting.
+                if b%2==1 and s.id not in {'intro','outro'}:
+                    kick_ticks.update((base+3*TPQ,base+3*TPQ+TPQ//4,base+3*TPQ+TPQ//2))
                 for t in sorted(kick_ticks):
                     is_double=kick_step<TPQ or t%TPQ!=0
                     articulation='DOUBLE_KICK_ESCALATION' if is_double else 'THRASH_KICK'
-                    ev.append(NoteEvent(t,TPQ//8,36,108 if t%TPQ==0 else 102,9,articulation,'PROPULSION'))
+                    ev.append(NoteEvent(t,TPQ//8,36,120 if t%TPQ==0 else 116,9,articulation,'PROPULSION'))
             if b==s.bars-1:
-                for i,n in enumerate((45,47,50,47)): ev.append(NoteEvent(base+3*TPQ+i*TPQ//4,TPQ//8,n,96+i*4,9,'TOM_FILL','TRANSITION'))
+                for i,n in enumerate((45,47,50,47)): ev.append(NoteEvent(base+3*TPQ+i*TPQ//4,TPQ//8,n,108+i*4,9,'TOM_FILL','TRANSITION'))
     return tuple(sorted(ev,key=lambda e:(e.start_tick,e.note,e.velocity)))
 
 def _lead(sections):
     s=next(x for x in sections if x.id=='solo'); start=s.start_bar*BAR_TICKS; ev=[]
-    ev.append(NoteEvent(start,TPQ*2,76,104,3,'LEAD_SUSTAIN','MELODIC_LEAD'))
-    ev.append(NoteEvent(start+TPQ*3,TPQ,79,108,3,'LEAD_VIBRATO','MELODIC_LEAD'))
-    run=(76,79,81,82,84,86,88,91); run_start=start+BAR_TICKS*2
-    for i,n in enumerate(run): ev.append(NoteEvent(run_start+i*TPQ//4,TPQ//5,n,100+i%3*5,3,'LEAD_FAST_RUN','MELODIC_LEAD'))
-    ev.append(NoteEvent(start+BAR_TICKS*5,TPQ*2,95,118,3,'LEAD_PEAK','CLIMAX'))
-    ev.append(NoteEvent(start+BAR_TICKS*7,TPQ,88,100,3,'LEAD_VIBRATO','RESOLUTION'))
+    # Keep the lead in a believable upper-guitar register and phrase it in
+    # calls/responses.  Long notes and rests give the sampler room to sound
+    # like a guitar instead of a high-register MIDI xylophone.
+    ev.append(NoteEvent(start,TPQ*2,64,108,3,'LEAD_SUSTAIN','MELODIC_LEAD'))
+    ev.append(NoteEvent(start+TPQ*3,TPQ,67,112,3,'LEAD_VIBRATO','MELODIC_LEAD'))
+    run1=(64,67,69,70,72,70,69,67); run_start=start+BAR_TICKS*2
+    for i,n in enumerate(run1):
+        ev.append(NoteEvent(run_start+i*TPQ//4,TPQ//4, n,104+(i%3)*4,3,'LEAD_FAST_RUN','MELODIC_LEAD'))
+    # Answer with a chromatic/tritone-flavoured lick rather than repeating the
+    # same scalar ascent.
+    answer_start=start+BAR_TICKS*4
+    run2=(70,71,70,67,64,70,73,72)
+    for i,n in enumerate(run2):
+        ev.append(NoteEvent(answer_start+i*TPQ//4,TPQ//4,n,106+(i%2)*5,3,'LEAD_FAST_RUN','MELODIC_LEAD'))
+    ev.append(NoteEvent(start+BAR_TICKS*5+2*TPQ,TPQ*2,79,120,3,'LEAD_PEAK','CLIMAX'))
+    ev.append(NoteEvent(start+BAR_TICKS*7,TPQ*2,72,108,3,'LEAD_VIBRATO','RESOLUTION'))
     return tuple(ev)
 
 def build_chainsaw_diplomacy()->HostComposition:
