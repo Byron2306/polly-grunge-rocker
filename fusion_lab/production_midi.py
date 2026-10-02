@@ -22,20 +22,60 @@ def _render_articulation(name:str)->str:
 def _seed_for(profile:HumanizationProfile,layer:str)->int:
     return profile.seed ^ int(hashlib.sha256(layer.encode()).hexdigest()[:8],16)
 
+def _gesture_scale(function:str|None)->float:
+    if function == 'RIFF_SPRINT': return 0.55
+    if function == 'RIFF_PANIC': return 0.75
+    if function == 'RIFF_HOOK': return 0.9
+    if function == 'RIFF_STOMP': return 1.15
+    if function == 'RIFF_TRANSITION': return 1.4
+    return 1.0
+
+def _duration_scale(layer:str,event:NoteEvent,rng:random.Random)->float:
+    art=(event.articulation or '').upper()
+    if layer.startswith('rhythm_guitar_'):
+        if 'PALM_MUTE' in art:
+            return rng.uniform(0.82,0.94)
+        if 'OPEN_RELEASE' in art:
+            return rng.uniform(1.02,1.10)
+        if 'CHROMATIC' in art:
+            return rng.uniform(0.90,1.02)
+        return rng.uniform(0.94,1.04)
+    if layer == 'lead_guitar':
+        if 'SUSTAIN' in art or 'VIBRATO' in art or 'PEAK' in art:
+            return rng.uniform(1.04,1.18)
+        return rng.uniform(0.88,1.08)
+    return 1.0
+
 def humanize_events(host:HostComposition,events:tuple[NoteEvent,...],profile:HumanizationProfile,layer:str)->tuple[NoteEvent,...]:
     rng=random.Random(_seed_for(profile,layer))
     ms_per_tick=60000.0/(host.bpm*host.ticks_per_beat)
     timing_ms=profile.double_track_timing_ms if layer.startswith('rhythm_guitar_') else profile.timing_ms
     velocity_delta=profile.double_track_velocity_delta if layer.startswith('rhythm_guitar_') else profile.velocity_delta
     max_tick=max(0,round(timing_ms/ms_per_tick))
+    bar_ticks=host.ticks_per_beat*host.numerator
     onset_jitter={}
+    bar_drift={}
+    take_bias=0
+    if layer == 'rhythm_guitar_L' and max_tick:
+        take_bias=-max(1,max_tick//5)
+    elif layer == 'rhythm_guitar_R' and max_tick:
+        take_bias=max(1,max_tick//5)
     out=[]
     for e in events:
+        bar=e.start_tick//bar_ticks if bar_ticks else 0
+        if bar not in bar_drift:
+            drift_bound=max(0,max_tick//3)
+            bar_drift[bar]=rng.randint(-drift_bound,drift_bound) if drift_bound else 0
         if e.start_tick not in onset_jitter:
-            onset_jitter[e.start_tick]=rng.randint(-max_tick,max_tick) if max_tick else 0
+            scaled=max(0,round(max_tick*_gesture_scale(e.function)))
+            local=rng.randint(-scaled,scaled) if scaled else 0
+            onset_jitter[e.start_tick]=local+bar_drift[bar]+take_bias
         jitter=onset_jitter[e.start_tick]
         velocity=max(1,min(127,e.velocity+(rng.randint(-velocity_delta,velocity_delta) if velocity_delta else 0)))
-        out.append(NoteEvent(max(0,e.start_tick+jitter),e.duration_ticks,e.note,velocity,e.channel,e.articulation,e.function))
+        if layer.startswith('rhythm_guitar_') and e.function == 'RIFF_TRANSITION':
+            velocity=max(1,min(127,velocity+rng.randint(0,max(1,velocity_delta//2))))
+        duration=max(1,round(e.duration_ticks*_duration_scale(layer,e,rng)))
+        out.append(NoteEvent(max(0,e.start_tick+jitter),duration,e.note,velocity,e.channel,e.articulation,e.function))
     return tuple(sorted(out,key=lambda e:(e.start_tick,e.note,e.duration_ticks,e.velocity)))
 
 def _messages(host:HostComposition,track:RoleTrack,instrument:InstrumentProfile):
