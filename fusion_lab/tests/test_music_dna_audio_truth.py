@@ -21,6 +21,23 @@ def write_wave(path: Path, *, amplitude: float, decay: float = 1.0, frames: int 
         wav.writeframes(bytes(payload))
 
 
+def write_sparse_phrase(path: Path, *, decay: float, seconds: float = 4.0):
+    sample_rate = 48000
+    frames = int(sample_rate * seconds)
+    attacks = [int(sample_rate * t) for t in (0.40, 1.25, 2.10, 3.05)]
+    values = [0.0] * frames
+    note_frames = int(sample_rate * 0.35)
+    for start in attacks:
+        for j in range(min(note_frames, frames - start)):
+            env = math.exp(-decay * j / note_frames)
+            values[start + j] += 0.55 * env * math.sin(2 * math.pi * 110 * j / sample_rate)
+    with wave.open(str(path), 'wb') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(b''.join(struct.pack('<h', int(max(-32767, min(32767, value * 32767)))) for value in values))
+
+
 class AudioTruthTests(unittest.TestCase):
     def test_constant_near_zero_wav_is_dead(self):
         with tempfile.TemporaryDirectory() as d:
@@ -40,6 +57,16 @@ class AudioTruthTests(unittest.TestCase):
             result = validate_articulation_audio(mute, sustain)
             self.assertTrue(result.ok)
             self.assertGreater(result.envelope_distance, 0.05)
+
+    def test_sparse_song_stems_are_compared_by_local_note_envelopes(self):
+        with tempfile.TemporaryDirectory() as d:
+            mute = Path(d) / 'mute.wav'; sustain = Path(d) / 'sustain.wav'
+            write_sparse_phrase(mute, decay=8.0)
+            write_sparse_phrase(sustain, decay=1.0)
+            result = validate_articulation_audio(mute, sustain)
+            self.assertTrue(result.ok, result.reasons)
+            self.assertGreater(result.envelope_distance, 0.05)
+            self.assertGreater(result.mute.early_rms, result.mute.late_rms)
 
     def test_dead_mute_is_refused_even_when_sustain_is_healthy(self):
         with tempfile.TemporaryDirectory() as d:
