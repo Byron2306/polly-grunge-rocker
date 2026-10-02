@@ -29,11 +29,14 @@ def main(argv: list[str] | None = None) -> int:
 
     # Conservative 1980s-thrash baseline. GxAmplifier-X contains amp head,
     # tonestack, and cabinet simulation in one verified LV2 processor.
+    # Clipping is intentional in a distorted guitar stage, so lv2file's
+    # clipping detector must not turn expected saturation into a hard failure.
     command = [
         lv2file,
         '-i', str(args.input),
         '-o', str(mono_out),
         '-m',
+        '--ignore-clipping',
         '-p', 'MasterGain:-10.0',
         '-p', 'PreGain:7.0',
         '-p', 'Distortion:65.0',
@@ -45,17 +48,40 @@ def main(argv: list[str] | None = None) -> int:
         '-p', 'Presence:6.0',
         AMP_URI,
     ]
-    subprocess.run(command, check=True)
+    try:
+        subprocess.run(
+            command,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        stdout = (exc.stdout or '').strip()
+        stderr = (exc.stderr or '').strip()
+        raise RuntimeError(
+            'FUSION_GUITARIX_LV2_FAILED: '
+            f'returncode={exc.returncode}; stdout={stdout}; stderr={stderr}; '
+            f'command={command}'
+        ) from exc
+
     if not mono_out.is_file() or mono_out.stat().st_size == 0:
         raise RuntimeError('FUSION_GUITARIX_MONO_OUTPUT_MISSING')
 
-    subprocess.run(
-        [ffmpeg, '-y', '-i', str(mono_out), '-ac', '2', '-c:a', 'pcm_s16le', str(args.output)],
-        check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
+    try:
+        subprocess.run(
+            [ffmpeg, '-y', '-i', str(mono_out), '-ac', '2', '-c:a', 'pcm_s16le', str(args.output)],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            'FUSION_GUITARIX_STEREO_CONVERT_FAILED: '
+            f'returncode={exc.returncode}; stderr={(exc.stderr or "").strip()}'
+        ) from exc
+
     try:
         mono_out.unlink()
     except FileNotFoundError:
