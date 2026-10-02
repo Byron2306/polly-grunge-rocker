@@ -10,6 +10,7 @@ PROFILES="$ROOT/fusion_lab/data/music_dna/genres"
 OUT="$ROOT/fusion_lab/out/host-003-pit-v5"
 PHONE="$HOME/storage/downloads/ChainsawTest"
 ACTION="${1:-isolated}"
+AMP_URI='http://guitarix.sourceforge.net/plugins/gx_amp#GUITARIX'
 
 cd "$ROOT"
 mkdir -p "$OUT" "$PHONE"
@@ -22,20 +23,28 @@ common=(
   --seed 1988
 )
 
+require_guitarix() {
+  if ! command -v lv2file >/dev/null 2>&1; then
+    echo "V5 REFUSE: lv2file is not installed" >&2
+    exit 2
+  fi
+  if ! command -v lv2ls >/dev/null 2>&1; then
+    echo "V5 REFUSE: lv2ls is not installed" >&2
+    exit 2
+  fi
+  if ! lv2ls | grep -Fxq "$AMP_URI"; then
+    echo "V5 REFUSE: Guitarix amp LV2 plugin is not installed: $AMP_URI" >&2
+    exit 2
+  fi
+}
+
 case "$ACTION" in
   analyze)
     python -m fusion_lab.music_dna.chainsaw_v5 analyze "${common[@]}"
     ;;
 
   isolated)
-    if [[ -z "${FUSION_REAL_AMP_COMMAND_TEMPLATE:-}" ]]; then
-      echo "V5 REFUSE: FUSION_REAL_AMP_COMMAND_TEMPLATE is not set" >&2
-      exit 2
-    fi
-    if [[ -z "${FUSION_THRASH_CAB_IR:-}" || ! -f "${FUSION_THRASH_CAB_IR:-}" ]]; then
-      echo "V5 REFUSE: FUSION_THRASH_CAB_IR does not point to a cabinet IR file" >&2
-      exit 2
-    fi
+    require_guitarix
     python -m fusion_lab.music_dna.chainsaw_v5 isolated \
       "${common[@]}" --sample-rate 48000 --sfizz-render sfizz_render
     if [[ -f "$OUT/CHAINSAW_DIPLOMACY_V5_ISOLATED_GUITARS.wav" ]]; then
@@ -62,6 +71,7 @@ case "$ACTION" in
     ;;
 
   full)
+    require_guitarix
     python -m fusion_lab.music_dna.chainsaw_v5 full \
       "${common[@]}" --gate "$OUT/v5-gate.json" \
       --sample-rate 48000 --sfizz-render sfizz_render
