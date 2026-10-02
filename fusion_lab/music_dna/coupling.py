@@ -52,14 +52,19 @@ def extract_coupling_features(
         raise ValueError('tolerance_ticks must be >= 0')
 
     guitar = _onsets(host.tracks['RHYTHM_GUITAR'].events)
-    bass = _onsets(host.tracks['BASS'].events)
+    bass_events = tuple(host.tracks['BASS'].events)
+    bass = _onsets(bass_events)
+    # Groove lock and fill independence are different musical facts.  Bass
+    # fills intentionally leave the kick/guitar lattice and are already
+    # measured by fill_probability, so do not count them as kick-lock misses.
+    bass_groove = _onsets(event for event in bass_events if not (event.function and 'FILL' in event.function))
     kick = _onsets(host.tracks['DRUMS'].events, note=36)
     snare = _onsets(host.tracks['DRUMS'].events, note=38)
 
     return {
         'guitar_kick_coupling': _coincidence_ratio(guitar, kick, tolerance_ticks),
         'bass_guitar_lock_rate': _coincidence_ratio(bass, guitar, tolerance_ticks),
-        'bass_kick_lock_rate': _coincidence_ratio(bass, kick, tolerance_ticks),
+        'bass_kick_lock_rate': _coincidence_ratio(bass_groove, kick, tolerance_ticks),
         'snare_guitar_accent_alignment': _coincidence_ratio(snare, guitar, tolerance_ticks),
         'section_density_contrast': _section_density_contrast(host),
     }
