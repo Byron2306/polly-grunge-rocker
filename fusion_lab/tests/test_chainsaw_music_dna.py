@@ -70,7 +70,7 @@ class ChainsawMusicDNATests(unittest.TestCase):
         host = build_chainsaw_diplomacy()
         drums = host.tracks['DRUMS'].events
         bass = host.tracks['BASS'].events
-        backbeats = [e for e in drums if e.role == 'BACKBEAT']
+        backbeats = [e for e in drums if e.function == 'BACKBEAT']
         double_kicks = [e for e in drums if e.articulation == 'DOUBLE_KICK_ESCALATION']
         picked_bass = [e for e in bass if e.articulation == 'PICKED_FOLLOW']
         self.assertTrue(backbeats)
