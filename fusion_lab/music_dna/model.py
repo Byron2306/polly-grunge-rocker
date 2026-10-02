@@ -35,20 +35,10 @@ class RangeBand:
     maximum: float
 
     def __post_init__(self) -> None:
-        values = (
-            self.minimum,
-            self.preferred_minimum,
-            self.preferred_maximum,
-            self.maximum,
-        )
+        values = (self.minimum, self.preferred_minimum, self.preferred_maximum, self.maximum)
         if not all(isfinite(value) for value in values):
             raise ValueError('range values must be finite')
-        if not (
-            self.minimum
-            <= self.preferred_minimum
-            <= self.preferred_maximum
-            <= self.maximum
-        ):
+        if not self.minimum <= self.preferred_minimum <= self.preferred_maximum <= self.maximum:
             raise ValueError('range bounds must be ordered')
 
     def normalized_distance(self, value: float) -> float:
@@ -110,6 +100,7 @@ class MusicDNAReport:
     feature_vector: Mapping[str, float]
     coupling: Mapping[str, float]
     hook_score: Mapping[str, float]
+    riff_structure: Mapping[str, object]
     production_truth: Mapping[str, object]
     decision: GenreDecision
 
@@ -119,6 +110,7 @@ class MusicDNAReport:
             'feature_vector': dict(sorted(self.feature_vector.items())),
             'coupling': dict(sorted(self.coupling.items())),
             'hook_score': dict(sorted(self.hook_score.items())),
+            'riff_structure': dict(self.riff_structure),
             'production_truth': dict(sorted(self.production_truth.items())),
             'decision': {
                 'state': self.decision.state.value,
@@ -180,6 +172,11 @@ class ProductionDNA(DNAComponent):
 
 
 @dataclass(frozen=True, slots=True)
+class RiffStructureDNA(DNAComponent):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
 class GenreDNA:
     id: str
     tempo: RangeBand
@@ -192,6 +189,7 @@ class GenreDNA:
     keys: KeysDNA
     arrangement: ArrangementDNA
     production: ProductionDNA
+    riff_structure: RiffStructureDNA | None = None
 
     def __post_init__(self) -> None:
         if not self.id:
