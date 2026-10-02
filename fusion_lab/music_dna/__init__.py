@@ -16,8 +16,10 @@ from .model import (
     MusicDNAReport,
     ProductionDNA,
     RangeBand,
+    RiffStructureDNA,
     VocalDNA,
 )
+from .riff_morphology import Gesture, RiffFamily, RiffMorphologyReport, RiffSignature, analyze_riff_morphology, signature_for_bar
 from .validator import build_music_dna_report, validate_genre
 
 __all__ = [
@@ -32,6 +34,7 @@ __all__ = [
     'FeatureVector',
     'GenreDNA',
     'GenreDecision',
+    'Gesture',
     'GuitarDNA',
     'HardConstraint',
     'HarmonyDNA',
@@ -39,11 +42,17 @@ __all__ = [
     'MusicDNAReport',
     'ProductionDNA',
     'RangeBand',
+    'RiffFamily',
+    'RiffMorphologyReport',
+    'RiffSignature',
+    'RiffStructureDNA',
     'VocalDNA',
     'analyze_host',
+    'analyze_riff_morphology',
     'blend_genres',
     'build_music_dna_report',
     'load_corpus',
+    'signature_for_bar',
     'summarize_corpus',
     'validate_genre',
 ]
