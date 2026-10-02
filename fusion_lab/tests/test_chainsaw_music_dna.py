@@ -63,9 +63,21 @@ class ChainsawMusicDNATests(unittest.TestCase):
         self.assertTrue(lead)
         self.assertLessEqual(max(event.note for event in lead), 84)
         self.assertGreaterEqual(min(event.note for event in lead), 52)
-        # The solo should breathe instead of firing a continuous MIDI scale.
         starts = sorted(event.start_tick for event in lead)
         self.assertTrue(any(b - a >= 480 for a, b in zip(starts, starts[1:])))
+
+    def test_rhythm_section_keeps_aggro_velocity_and_double_kick_pressure(self):
+        host = build_chainsaw_diplomacy()
+        drums = host.tracks['DRUMS'].events
+        bass = host.tracks['BASS'].events
+        backbeats = [e for e in drums if e.role == 'BACKBEAT']
+        double_kicks = [e for e in drums if e.articulation == 'DOUBLE_KICK_ESCALATION']
+        picked_bass = [e for e in bass if e.articulation == 'PICKED_FOLLOW']
+        self.assertTrue(backbeats)
+        self.assertGreaterEqual(min(e.velocity for e in backbeats), 123)
+        self.assertGreaterEqual(len(double_kicks), 24)
+        self.assertTrue(picked_bass)
+        self.assertGreaterEqual(min(e.velocity for e in picked_bass), 98)
 
 
 if __name__ == '__main__':
