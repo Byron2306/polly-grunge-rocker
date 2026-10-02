@@ -69,7 +69,12 @@ class ProductionMixDiagnosticsTests(unittest.TestCase):
                 calls['count'] += 1
                 if calls['count'] == 1:
                     return subprocess.CompletedProcess(cmd, 0, '', '')
-                raise subprocess.CalledProcessError(1, cmd, stdout='wrapper stdout', stderr='FUSION_GUITARIX_LV2_FAILED: bad port')
+                raise subprocess.CalledProcessError(
+                    1,
+                    cmd,
+                    output='wrapper stdout',
+                    stderr='FUSION_GUITARIX_LV2_FAILED: bad port',
+                )
 
             with patch('fusion_lab.production_render.shutil.which', side_effect=lambda name: f'/usr/bin/{name}'), patch(
                 'fusion_lab.production_render.subprocess.run', side_effect=run_side_effect
