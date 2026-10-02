@@ -25,11 +25,14 @@ def _peak_dbfs(path: Path) -> float:
     return 20.0 * math.log10(peak)
 
 
+# Thrash target hierarchy: drums lead the violence, bass is audible as a
+# picked instrument, and the two rhythm guitars remain wide without masking
+# the whole rhythm section.
 THRASH_1988_TARGET_PEAKS_DBFS = {
-    'rhythm_guitar_L': -15.0,
-    'rhythm_guitar_R': -15.0,
-    'bass': -16.0,
-    'drums': -14.0,
+    'rhythm_guitar_L': -16.0,
+    'rhythm_guitar_R': -16.0,
+    'bass': -13.5,
+    'drums': -12.5,
     'lead_guitar': -18.0,
 }
 
