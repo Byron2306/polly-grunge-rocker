@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from fusion_lab.chainsaw_diplomacy import build_chainsaw_diplomacy
+from fusion_lab.chainsaw_diplomacy import BAR_TICKS, build_chainsaw_diplomacy
 from fusion_lab.music_dna.analysis import analyze_host
 from fusion_lab.music_dna.genre_profiles import load_seed_genre_profiles
 
@@ -41,6 +41,31 @@ class ChainsawMusicDNATests(unittest.TestCase):
         self.assertGreaterEqual(values['drums.double_kick_density'], 0.12)
         self.assertGreaterEqual(values['bass.fill_probability'], 0.08)
         self.assertLessEqual(report.coupling['bass_guitar_lock_rate'], 0.90)
+
+    def test_sections_do_not_all_recycle_the_same_opening_riff_cell(self):
+        host = build_chainsaw_diplomacy()
+        rhythm = host.tracks['RHYTHM_GUITAR'].events
+        signatures = []
+        for section in host.sections:
+            start = section.start_bar * BAR_TICKS
+            end = start + BAR_TICKS
+            cells = tuple(
+                (event.start_tick - start, event.note, event.duration_ticks, event.articulation)
+                for event in rhythm
+                if start <= event.start_tick < end
+            )
+            signatures.append(cells)
+        self.assertGreaterEqual(len(set(signatures)), 5)
+
+    def test_lead_stays_in_guitar_like_register_and_uses_phrase_space(self):
+        host = build_chainsaw_diplomacy()
+        lead = host.tracks['LEAD_KEYS'].events
+        self.assertTrue(lead)
+        self.assertLessEqual(max(event.note for event in lead), 84)
+        self.assertGreaterEqual(min(event.note for event in lead), 52)
+        # The solo should breathe instead of firing a continuous MIDI scale.
+        starts = sorted(event.start_tick for event in lead)
+        self.assertTrue(any(b - a >= 480 for a, b in zip(starts, starts[1:])))
 
 
 if __name__ == '__main__':
